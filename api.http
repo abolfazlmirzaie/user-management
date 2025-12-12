@@ -1,0 +1,57 @@
+POST localhost:8000/api/auth/register/
+Content-Type: application/json
+
+{
+  "identifier": "sghshrthdds@gmail.com",
+  "password1": "test123@a",
+  "password2": "test123@a"
+}
+
+###
+
+POST localhost:8000/api/auth/email-verify/
+Authorization: Basic MTExOjExMQ==
+
+###
+
+
+POST localhost:8000/api/auth/code-verify/
+Authorization: Basic MTExOjExMQ==
+Content-Type: application/json
+
+{
+"code": "448686"
+}
+
+###
+
+POST localhost:8000/api/auth/login/
+Content-Type: application/json
+
+
+{
+  "username": "111",
+  "password": "111"
+}
+
+###
+
+POST localhost:8000/api/auth/logout/
+
+Authorization: Basic MTExOjExMQ==
+
+###
+POST localhost:8000/api/auth/otp-login/
+Content-Type: application/json
+
+{
+  "email": "mabo80800@gmail.com"
+}
+###
+POST localhost:8000/api/auth/otp-login-verify/
+Content-Type: application/json
+
+{
+  "email": "mabo80800@gmail.com",
+  "code": "20501"
+}
