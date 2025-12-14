@@ -55,3 +55,30 @@ Content-Type: application/json
   "email": "mabo80800@gmail.com",
   "code": "20501"
 }
+
+###
+POST localhost:8000/api/auth/enable-two-factor-login/
+Authorization: Basic MTExOjExMQ==
+
+
+###
+
+
+POST localhost:8000/api/auth/login/
+Content-Type: application/json
+
+
+{
+  "username": "111",
+  "password": "111"
+}
+
+###
+
+POST localhost:8000/api/auth/verify-two-factor-login/
+Content-Type: application/json
+
+{
+  "email": "mabo80800@gmail.com",
+  "code": "dddd"
+}

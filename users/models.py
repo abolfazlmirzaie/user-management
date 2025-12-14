@@ -8,7 +8,6 @@ from django.utils import timezone
 class CustomUser(AbstractUser):
     email = models.EmailField(unique=True, blank=True, null=True)
     is_verified = models.BooleanField(default=False)
-    email_otp = models.CharField(max_length=6, blank=True, null=True)
     two_factor_enabled = models.BooleanField(default=False)
 
     def __str__(self):

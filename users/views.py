@@ -83,12 +83,34 @@ class VerifyCodeView(APIView):
         ), redirect("/")
 
 
+
+
+class EnableTwoFactorView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    def post(self, request, *args, **kwargs):
+        if request.user.is_verified:
+            user = CustomUser.objects.get(email=request.user.email)
+            user.two_factor_enabled = True
+            user.save()
+            return Response({"message": "your two factor login is now enable"}, status=status.HTTP_200_OK)
+        return Response({"message": "you are not verified"}, status=status.HTTP_400_BAD_REQUEST)
+
 class UserLoginView(APIView):
 
     def post(self, request, *args, **kwargs):
         serializer = UserLoginSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.validated_data["user"]
+            if user.two_factor_enabled:
+                code = str(random.randint(100000, 999999))
+                request.session["email"] = user.email
+                EmailOTP.objects.update_or_create(email=user.email, defaults={"code": code})
+                send_mail(
+                    subject="email verification",
+                    message=f"your otp code is : {code}",
+                    from_email=None,
+                    recipient_list=[user.email])
+                return Response({"message": "your code has been sent"}, status=status.HTTP_200_OK)
             login(request, user)
             return Response({"message": "you are logged in"}, status=status.HTTP_200_OK)
 
@@ -171,3 +193,44 @@ class OTPVerifyLoginView(APIView):
         user = CustomUser.objects.get(email=email)
         login(request, user)
         return Response({"message": "you are logged in"}, status=status.HTTP_200_OK)
+
+
+
+
+
+
+class VerifyTwoFactorLogin(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = OTPVerifyLoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        code = serializer.validated_data["code"]
+
+
+        # just for test API
+        # you can get the EMAIL from session ----- email = request.session.get["email"]
+        email = serializer.validated_data["email"]
+
+
+        try:
+            otp = EmailOTP.objects.get(email=email)
+        except EmailOTP.DoesNotExist:
+            return Response({"message": "there is no code for this email"}, status=400)
+
+        if otp.is_expired():
+            otp.delete()
+            return Response({"message": "code is expired"}, status=400)
+
+        if otp.code != code:
+            return Response({"message": "the giving code is incorrect"}, status=400)
+
+        otp.delete()
+        user = CustomUser.objects.get(email=email)
+        login(request, user)
+        return Response({"message": "you are logged in"}, status=status.HTTP_200_OK)
+
+
+
+
+
+
+

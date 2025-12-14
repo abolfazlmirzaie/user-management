@@ -8,12 +8,16 @@ from .views import (
     UserRegisterView,
     VerifyCodeView,
     VerifyEmailView,
+    EnableTwoFactorView,
+    VerifyTwoFactorLogin,
 )
 
 
 app_name = "users"
 urlpatterns = [
     path("register/", UserRegisterView.as_view(), name="register"),
+    path("enable-two-factor-login/", EnableTwoFactorView.as_view(), name="enable-two-factor-login"),
+    path("verify-two-factor-login/", VerifyTwoFactorLogin.as_view(), name="verify-two-factor-login"),
     path("login/", UserLoginView.as_view(), name="login"),
     path("logout/", UserLogoutView.as_view(), name="logout"),
     path("email-verify/", VerifyEmailView.as_view(), name="email-verify"),
