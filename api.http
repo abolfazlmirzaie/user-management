@@ -82,3 +82,12 @@ Content-Type: application/json
   "email": "mabo80800@gmail.com",
   "code": "dddd"
 }
+
+###
+PATCH localhost:8000/api/auth/edit-profile/
+Content-Type: application/json
+
+{
+  "first_name": "abolfazl",
+  "last_name": "mirzaie"
+}

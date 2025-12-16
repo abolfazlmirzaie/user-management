@@ -3,6 +3,7 @@ import re
 from django.contrib.auth import authenticate, get_user_model, password_validation
 from rest_framework import serializers
 
+from users.models import CustomUser
 
 User = get_user_model()
 
@@ -58,3 +59,13 @@ class UserEmailLoginSerializer(serializers.Serializer):
 class OTPVerifyLoginSerializer(serializers.Serializer):
     email = serializers.CharField(required=True)
     code = serializers.CharField(max_length=6)
+
+
+class EditUserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+
+        fields = ("username", "email", "first_name", "last_name", "password", "profile_picture")
+        extra_kwargs = {"password": {"write_only": True}}
+
+        

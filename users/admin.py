@@ -8,10 +8,10 @@ from .models import CustomUser, EmailOTP, OTPLogin
 class CustomUserAdmin(UserAdmin):
     model = CustomUser
 
-    list_display = ("username", "email", "is_verified", "is_staff", "is_active")
+    list_display = ("username", "is_verified", "is_staff", "is_active")
 
     fieldsets = (
-        (None, {"fields": ("username", "email", "password")}),
+        (None, {"fields": ("username", "email","profile_picture" ,"first_name" ,"last_name" , "password")}),
         (
             "Status",
             {"fields": ("is_verified", "is_active", "is_staff", "is_superuser")},

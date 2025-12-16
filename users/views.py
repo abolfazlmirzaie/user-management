@@ -4,8 +4,11 @@ from django.contrib.auth import login, logout
 from django.core.mail import send_mail
 from django.shortcuts import redirect
 from rest_framework import permissions, status
+from rest_framework.generics import RetrieveUpdateAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import viewsets
 
 from .models import CustomUser, EmailOTP, OTPLogin
 from .serializers import (
@@ -14,6 +17,7 @@ from .serializers import (
     UserLoginSerializer,
     UserRegisterSerializer,
     VerifyEmailSerializer,
+    EditUserProfileSerializer,
 )
 
 
@@ -231,6 +235,11 @@ class VerifyTwoFactorLogin(APIView):
 
 
 
+class EditProfileView(RetrieveUpdateAPIView):
+    serializer_class = EditUserProfileSerializer
+    permission_classes = [IsAuthenticated]
 
+    def get_object(self):
+        return self.request.user
 
 
