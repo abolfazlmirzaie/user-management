@@ -8,7 +8,6 @@ from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import viewsets
 
 from .models import CustomUser, EmailOTP, OTPLogin
 from .serializers import (
@@ -18,6 +17,8 @@ from .serializers import (
     UserRegisterSerializer,
     VerifyEmailSerializer,
     EditUserProfileSerializer,
+    PasswordResetRequestSerializer,
+    PasswordResetConfirmSerializer,
 )
 
 
@@ -87,17 +88,22 @@ class VerifyCodeView(APIView):
         ), redirect("/")
 
 
-
-
 class EnableTwoFactorView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
+
     def post(self, request, *args, **kwargs):
         if request.user.is_verified:
             user = CustomUser.objects.get(email=request.user.email)
             user.two_factor_enabled = True
             user.save()
-            return Response({"message": "your two factor login is now enable"}, status=status.HTTP_200_OK)
-        return Response({"message": "you are not verified"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"message": "your two factor login is now enable"},
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            {"message": "you are not verified"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
 
 class UserLoginView(APIView):
 
@@ -108,13 +114,18 @@ class UserLoginView(APIView):
             if user.two_factor_enabled:
                 code = str(random.randint(100000, 999999))
                 request.session["email"] = user.email
-                EmailOTP.objects.update_or_create(email=user.email, defaults={"code": code})
+                EmailOTP.objects.update_or_create(
+                    email=user.email, defaults={"code": code}
+                )
                 send_mail(
                     subject="email verification",
                     message=f"your otp code is : {code}",
                     from_email=None,
-                    recipient_list=[user.email])
-                return Response({"message": "your code has been sent"}, status=status.HTTP_200_OK)
+                    recipient_list=[user.email],
+                )
+                return Response(
+                    {"message": "your code has been sent"}, status=status.HTTP_200_OK
+                )
             login(request, user)
             return Response({"message": "you are logged in"}, status=status.HTTP_200_OK)
 
@@ -175,11 +186,9 @@ class OTPVerifyLoginView(APIView):
         serializer.is_valid(raise_exception=True)
         code = serializer.validated_data["code"]
 
-
         # just for test API
         # you can get the EMAIL from session ----- email = request.session.get["email"]
         email = serializer.validated_data["email"]
-
 
         try:
             otp = OTPLogin.objects.get(email=email)
@@ -199,21 +208,15 @@ class OTPVerifyLoginView(APIView):
         return Response({"message": "you are logged in"}, status=status.HTTP_200_OK)
 
 
-
-
-
-
 class VerifyTwoFactorLogin(APIView):
     def post(self, request, *args, **kwargs):
         serializer = OTPVerifyLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         code = serializer.validated_data["code"]
 
-
         # just for test API
         # you can get the EMAIL from session ----- email = request.session.get["email"]
         email = serializer.validated_data["email"]
-
 
         try:
             otp = EmailOTP.objects.get(email=email)
@@ -233,13 +236,46 @@ class VerifyTwoFactorLogin(APIView):
         return Response({"message": "you are logged in"}, status=status.HTTP_200_OK)
 
 
-
-
 class EditProfileView(RetrieveUpdateAPIView):
     serializer_class = EditUserProfileSerializer
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
         return self.request.user
+
+
+
+
+
+
+class PasswordResetRequestView(APIView):
+    def post(self, request):
+        serializer = PasswordResetRequestSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"message": "your reset link has been sent"}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+class PasswordResetConfirmView(APIView):
+    def post(self, request, uid, token):
+        serializer = PasswordResetConfirmSerializer(
+            data={"new_password": request.data.get("new_password")},
+            uid=uid,
+            token=token
+        )
+        if serializer.is_valid():
+            serializer.save()
+            return Response(data={"message": "your password has been changed"}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+
+
 
 

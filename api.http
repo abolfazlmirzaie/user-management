@@ -91,3 +91,18 @@ Content-Type: application/json
   "first_name": "abolfazl",
   "last_name": "mirzaie"
 }
+
+###
+POST localhost:8000/api/auth/password-reset-request/
+Content-Type: application/json
+
+{
+  "email": "mabo80liut800@gmail.com"
+}
+###
+POST http://127.0.0.1:8000/api/auth/reset-password/MQ/d1158d-9416c6baf704f89e6add0a858e1bd4d1/
+Content-Type: application/json
+
+{
+  "new_password": 3080470436
+}

@@ -1,6 +1,10 @@
 import re
 
 from django.contrib.auth import authenticate, get_user_model, password_validation
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.core.mail import send_mail
 from rest_framework import serializers
 
 from users.models import CustomUser
@@ -65,7 +69,117 @@ class EditUserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
 
-        fields = ("username", "email", "first_name", "last_name", "password", "profile_picture")
+        fields = (
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "password",
+            "profile_picture",
+        )
         extra_kwargs = {"password": {"write_only": True}}
 
-        
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    def validate_email(self, value):
+        if not User.objects.filter(email=value).exists() or not User.objects.get(email=value).is_verified:
+            raise serializers.ValidationError("Invalid email")
+        return value
+
+    def save(self, **kwargs):
+        user = User.objects.get(email=self.validated_data["email"])
+        token = PasswordResetTokenGenerator().make_token(user)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+
+
+        reset_link = f"http://127.0.0.1:8000/api/auth/reset-password/{uid}/{token}/"
+        print(reset_link)
+        send_mail(
+            subject="password reset",
+            message=f"click on the link below to reset your password: /n{reset_link}",
+            from_email=None,
+            recipient_list=[user.email],
+        )
+        return reset_link
+
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    new_password = serializers.CharField(required=True, write_only=True)
+
+    def __init__(self, *args, **kwargs):
+
+        self.uid = kwargs.pop("uid", None)
+        self.token = kwargs.pop("token", None)
+        super().__init__(self, *args, **kwargs)
+
+    def validate(self, attrs):
+        try:
+            uid = urlsafe_base64_decode(self.uid).decode()
+            self.user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            raise serializers.ValidationError("user does not exist")
+
+        if not PasswordResetTokenGenerator().check_token(self.user, self.token):
+            raise serializers.ValidationError("the token is expired")
+
+        return attrs
+
+    def save(self, **kwargs):
+        self.user.set_password(self.validated_data["new_password"])
+        self.user.save()
+        return self.user
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

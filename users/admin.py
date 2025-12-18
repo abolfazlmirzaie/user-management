@@ -11,7 +11,19 @@ class CustomUserAdmin(UserAdmin):
     list_display = ("username", "is_verified", "is_staff", "is_active")
 
     fieldsets = (
-        (None, {"fields": ("username", "email","profile_picture" ,"first_name" ,"last_name" , "password")}),
+        (
+            None,
+            {
+                "fields": (
+                    "username",
+                    "email",
+                    "profile_picture",
+                    "first_name",
+                    "last_name",
+                    "password",
+                )
+            },
+        ),
         (
             "Status",
             {"fields": ("is_verified", "is_active", "is_staff", "is_superuser")},
