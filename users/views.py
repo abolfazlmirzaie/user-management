@@ -7,6 +7,7 @@ from rest_framework import permissions, status
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from .models import CustomUser, EmailOTP, OTPLogin
@@ -20,9 +21,11 @@ from .serializers import (
     PasswordResetRequestSerializer,
     PasswordResetConfirmSerializer,
 )
+from .throttles import LoginThrottle
 
 
 class UserRegisterView(APIView):
+    throttle_classes = [LoginThrottle]
     def post(self, request, *args, **kwargs):
         serializer = UserRegisterSerializer(data=request.data)
         if serializer.is_valid():
@@ -36,6 +39,7 @@ class UserRegisterView(APIView):
 
 class VerifyEmailView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
+    throttle_classes = [UserRateThrottle]
 
     def post(self, request, *args, **kwargs):
         email = request.user.email
@@ -59,6 +63,7 @@ class VerifyEmailView(APIView):
 
 
 class VerifyCodeView(APIView):
+    throttle_classes = [UserRateThrottle]
     permission_classes = (permissions.IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
@@ -89,6 +94,7 @@ class VerifyCodeView(APIView):
 
 
 class EnableTwoFactorView(APIView):
+    throttle_classes = [UserRateThrottle]
     permission_classes = (permissions.IsAuthenticated,)
 
     def post(self, request, *args, **kwargs):
@@ -106,7 +112,7 @@ class EnableTwoFactorView(APIView):
 
 
 class UserLoginView(APIView):
-
+    throttle_classes = [LoginThrottle]
     def post(self, request, *args, **kwargs):
         serializer = UserLoginSerializer(data=request.data)
         if serializer.is_valid():
@@ -136,6 +142,7 @@ class UserLoginView(APIView):
 
 
 class UserLogoutView(APIView):
+    throttle_classes = [LoginThrottle]
     def post(self, request, *args, **kwargs):
         user = request.user
         if user.is_authenticated:
@@ -150,6 +157,7 @@ class UserLogoutView(APIView):
 
 
 class OTPLoginView(APIView):
+    throttle_classes = [LoginThrottle]
 
     def post(self, request, *args, **kwargs):
         serializer = UserEmailLoginSerializer(data=request.data)
@@ -180,6 +188,7 @@ class OTPLoginView(APIView):
 
 
 class OTPVerifyLoginView(APIView):
+    throttle_classes = [UserRateThrottle]
 
     def post(self, request, *args, **kwargs):
         serializer = OTPVerifyLoginSerializer(data=request.data)
@@ -209,6 +218,7 @@ class OTPVerifyLoginView(APIView):
 
 
 class VerifyTwoFactorLogin(APIView):
+    throttle_classes = [LoginThrottle]
     def post(self, request, *args, **kwargs):
         serializer = OTPVerifyLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -237,6 +247,7 @@ class VerifyTwoFactorLogin(APIView):
 
 
 class EditProfileView(RetrieveUpdateAPIView):
+    throttle_classes = [UserRateThrottle]
     serializer_class = EditUserProfileSerializer
     permission_classes = [IsAuthenticated]
 
@@ -249,6 +260,7 @@ class EditProfileView(RetrieveUpdateAPIView):
 
 
 class PasswordResetRequestView(APIView):
+    throttle_classes = [LoginThrottle]
     def post(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data)
         if serializer.is_valid():
@@ -261,6 +273,7 @@ class PasswordResetRequestView(APIView):
 
 
 class PasswordResetConfirmView(APIView):
+    throttle_classes = [LoginThrottle]
     def post(self, request, uid, token):
         serializer = PasswordResetConfirmSerializer(
             data={"new_password": request.data.get("new_password")},
