@@ -7,7 +7,6 @@ This project is currently under development and is being updated on a daily basi
 
 ## 📌 Current Status
 - Project is in active development
-- Daily updates and improvements are being made
 - Core features are in progress
 
 ---
