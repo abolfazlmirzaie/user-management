@@ -27,8 +27,9 @@ If you have suggestions or would like to contribute, feel free to open an Issue 
 ## ⚠️ Important Note
 This project is not yet complete and some parts may be missing or subject to change.
 
+---
 
-HOW TO USE?
+## HOW TO USE?
 just clone project and enter this command in your terminal :  docker-compose up --build
 
 and the project will be avilable on : http://localhost:8000/
