@@ -1,10 +1,11 @@
 import re
 
-from django.contrib.auth import authenticate, get_user_model, password_validation
+from django.contrib.auth import (authenticate, get_user_model,
+                                 password_validation)
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from django.utils.encoding import force_bytes
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.core.mail import send_mail
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import serializers
 
 from users.models import CustomUser
@@ -80,11 +81,14 @@ class EditUserProfileSerializer(serializers.ModelSerializer):
         extra_kwargs = {"password": {"write_only": True}}
 
 
-
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
+
     def validate_email(self, value):
-        if not User.objects.filter(email=value).exists() or not User.objects.get(email=value).is_verified:
+        if (
+            not User.objects.filter(email=value).exists()
+            or not User.objects.get(email=value).is_verified
+        ):
             raise serializers.ValidationError("Invalid email")
         return value
 
@@ -92,7 +96,6 @@ class PasswordResetRequestSerializer(serializers.Serializer):
         user = User.objects.get(email=self.validated_data["email"])
         token = PasswordResetTokenGenerator().make_token(user)
         uid = urlsafe_base64_encode(force_bytes(user.pk))
-
 
         reset_link = f"http://127.0.0.1:8000/api/auth/reset-password/{uid}/{token}/"
         print(reset_link)
@@ -103,7 +106,6 @@ class PasswordResetRequestSerializer(serializers.Serializer):
             recipient_list=[user.email],
         )
         return reset_link
-
 
 
 class PasswordResetConfirmSerializer(serializers.Serializer):
@@ -131,55 +133,3 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         self.user.set_password(self.validated_data["new_password"])
         self.user.save()
         return self.user
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

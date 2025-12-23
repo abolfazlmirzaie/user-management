@@ -1,19 +1,10 @@
 from django.urls import path
 
-from .views import (
-    OTPLoginView,
-    OTPVerifyLoginView,
-    UserLoginView,
-    UserLogoutView,
-    UserRegisterView,
-    VerifyCodeView,
-    VerifyEmailView,
-    EnableTwoFactorView,
-    VerifyTwoFactorLogin,
-    EditProfileView,
-    PasswordResetRequestView,
-    PasswordResetConfirmView,
-)
+from .views import (EditProfileView, EnableTwoFactorView, OTPLoginView,
+                    OTPVerifyLoginView, PasswordResetConfirmView,
+                    PasswordResetRequestView, UserLoginView, UserLogoutView,
+                    UserRegisterView, VerifyCodeView, VerifyEmailView,
+                    VerifyTwoFactorLogin)
 
 urlpatterns = [
     path("register/", UserRegisterView.as_view(), name="register"),
@@ -34,6 +25,14 @@ urlpatterns = [
     path("otp-verify/", VerifyCodeView.as_view(), name="otp-verify"),
     path("otp-login/", OTPLoginView.as_view(), name="otp-login"),
     path("otp-login-verify/", OTPVerifyLoginView.as_view(), name="otp-login-verify"),
-    path("password-reset-request/", PasswordResetRequestView.as_view(), name="password-reset-request"),
-    path("reset-password/<uid>/<token>/", PasswordResetConfirmView.as_view(), name="password-reset-confirm"),
+    path(
+        "password-reset-request/",
+        PasswordResetRequestView.as_view(),
+        name="password-reset-request",
+    ),
+    path(
+        "reset-password/<uid>/<token>/",
+        PasswordResetConfirmView.as_view(),
+        name="password-reset-confirm",
+    ),
 ]
