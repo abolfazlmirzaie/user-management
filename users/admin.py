@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
-from .models import CustomUser, EmailOTP, OTPLogin
+from .models import CustomUser, EmailOTP, OTPLogin, Subscription, SubscriptionPlan
 
 
 @admin.register(CustomUser)
@@ -55,3 +55,37 @@ class CustomUserAdmin(UserAdmin):
 
 admin.site.register(EmailOTP)
 admin.site.register(OTPLogin)
+
+
+
+
+@admin.register(SubscriptionPlan)
+class SubscriptionPlanAdmin(admin.ModelAdmin):
+    list_display = ("name", "price", "duration_days")
+    search_fields = ("name",)
+    ordering = ("price",)
+
+
+
+
+@admin.register(Subscription)
+class SubscriptionAdmin(admin.ModelAdmin):
+    list_display = ("user", "plan", "active")
+    list_filter = ("active", "plan")
+    search_fields = ("user__username", "plan__name")
+    ordering = ("-start_date",)
+    # exclude = ("start_date", "end_date")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
