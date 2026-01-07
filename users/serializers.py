@@ -8,7 +8,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import serializers
 
-from users.models import CustomUser
+from users.models import CustomUser, SubscriptionPlan
 
 User = get_user_model()
 
@@ -133,3 +133,6 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         self.user.set_password(self.validated_data["new_password"])
         self.user.save()
         return self.user
+
+
+

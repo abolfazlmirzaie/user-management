@@ -1,16 +1,17 @@
 import random
 
+from rest_framework.views import APIView
 from django.contrib.auth import login, logout
 from django.core.mail import send_mail
 from django.shortcuts import redirect
 from rest_framework import permissions, status
-from rest_framework.generics import RetrieveUpdateAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.generics import RetrieveUpdateAPIView, ListAPIView
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
-from .models import CustomUser, EmailOTP, OTPLogin
+from .models import CustomUser, EmailOTP, OTPLogin, SubscriptionPlan
 from .serializers import (EditUserProfileSerializer, OTPVerifyLoginSerializer,
                           PasswordResetConfirmSerializer,
                           PasswordResetRequestSerializer,
@@ -283,3 +284,21 @@ class PasswordResetConfirmView(APIView):
                 status=status.HTTP_200_OK,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+# views.py
+
+
+
+class PlanListView(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+    def get(self, request):
+        plans = SubscriptionPlan.objects.all()
+        data = [
+            {
+                "name": plan.name,
+                "price": plan.price,
+                "duration_days": plan.duration_days,
+            }
+            for plan in plans
+        ]
+        return Response(data)

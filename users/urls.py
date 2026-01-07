@@ -4,7 +4,7 @@ from .views import (EditProfileView, EnableTwoFactorView, OTPLoginView,
                     OTPVerifyLoginView, PasswordResetConfirmView,
                     PasswordResetRequestView, UserLoginView, UserLogoutView,
                     UserRegisterView, VerifyCodeView, VerifyEmailView,
-                    VerifyTwoFactorLogin)
+                    VerifyTwoFactorLogin, PlanListView)
 
 urlpatterns = [
     path("register/", UserRegisterView.as_view(), name="register"),
@@ -20,6 +20,7 @@ urlpatterns = [
         name="verify-two-factor-login",
     ),
     path("login/", UserLoginView.as_view(), name="login"),
+    path("plans/", PlanListView.as_view(), name="subscription_plan_list"),
     path("logout/", UserLogoutView.as_view(), name="logout"),
     path("email-verify/", VerifyEmailView.as_view(), name="email-verify"),
     path("otp-verify/", VerifyCodeView.as_view(), name="otp-verify"),
