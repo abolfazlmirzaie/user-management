@@ -2,7 +2,7 @@ POST localhost:8000/api/auth/register/
 Content-Type: application/json
 
 {
-  "identifier": "sghshrthdds@gmail.com",
+  "identifier": "sghshrthdfhsdeds@gmail.com",
   "password1": "test123@a",
   "password2": "test123@a"
 }

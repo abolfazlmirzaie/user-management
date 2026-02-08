@@ -25,13 +25,10 @@ class UserRegisterView(APIView):
 
     def post(self, request, *args, **kwargs):
         serializer = UserRegisterSerializer(data=request.data)
-        if serializer.is_valid():
-            user = serializer.save()
-            login(request, user)
-            return Response(
-                {"message": "you are logged in"}, status=status.HTTP_201_CREATED
-            )
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        login(request, user)
+        return Response({"message": "you are logged in"}, status=status.HTTP_201_CREATED)
 
 
 class VerifyEmailView(APIView):
@@ -194,7 +191,7 @@ class OTPVerifyLoginView(APIView):
         serializer.is_valid(raise_exception=True)
         code = serializer.validated_data["code"]
 
-        # just for test API
+        # just for test the API
         # you can get the EMAIL from session ----- email = request.session.get["email"]
         email = serializer.validated_data["email"]
 

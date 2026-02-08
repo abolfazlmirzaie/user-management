@@ -3,12 +3,15 @@ import re
 from django.contrib.auth import (authenticate, get_user_model,
                                  password_validation)
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
+from django.core.validators import validate_email
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import serializers
 
 from users.models import CustomUser, SubscriptionPlan
+from .validators import PasswordValidator
 
 User = get_user_model()
 
@@ -23,7 +26,13 @@ class UserRegisterSerializer(serializers.Serializer):
         if data["password1"] != data["password2"]:
             raise serializers.ValidationError("Passwords must match")
 
-        password_validation.validate_password(data["password1"], user=None)
+
+        validator = PasswordValidator()
+        try:
+            validator.validate(data["password1"])
+        except ValidationError as e:
+            raise serializers.ValidationError({"password1": e.messages})
+
         return data
 
     def create(self, validated_data):
@@ -31,14 +40,24 @@ class UserRegisterSerializer(serializers.Serializer):
         password = validated_data.pop("password1")
         validated_data.pop("password2")
 
-        if re.match(r"[^@]+@[^@]+\.[^@]+", identifier):
-            user = User(email=identifier, **validated_data)
-        else:
-            user = User(username=identifier, **validated_data)
+        try:
+            validate_email(identifier)
 
-        user.set_password(password)
-        user.save()
+            user = User.objects.create_user(
+                username=identifier,
+                email=identifier,
+                password=password,
+                **validated_data
+            )
+        except ValidationError:
+            user = User.objects.create_user(
+                username=identifier,
+                password=password,
+                **validated_data
+            )
+
         return user
+
 
 
 class VerifyEmailSerializer(serializers.Serializer):

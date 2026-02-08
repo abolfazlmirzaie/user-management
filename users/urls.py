@@ -7,7 +7,7 @@ from .views import (EditProfileView, EnableTwoFactorView, OTPLoginView,
                     VerifyTwoFactorLogin, PlanListView)
 
 urlpatterns = [
-    path("register/", UserRegisterView.as_view(), name="register"),
+    path('register/', UserRegisterView.as_view(), name='user-register'),
     path("edit-profile/", EditProfileView.as_view(), name="edit_profile"),
     path(
         "enable-two-factor-login/",

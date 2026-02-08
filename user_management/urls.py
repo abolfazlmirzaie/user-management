@@ -29,4 +29,6 @@ urlpatterns = [
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema")),
     path("api/schema/redoc/", SpectacularRedocView.as_view(url_name="schema")),
+    path('silk/', include('silk.urls', namespace='silk')),
+
 ]
