@@ -10,7 +10,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import serializers
 
-from users.models import CustomUser, SubscriptionPlan
+from users.models import CustomUser, SubscriptionPlan, EmailOTP
 from .validators import PasswordValidator
 
 User = get_user_model()
@@ -61,7 +61,11 @@ class UserRegisterSerializer(serializers.Serializer):
 
 
 class VerifyEmailSerializer(serializers.Serializer):
-    code = serializers.CharField(max_length=6)
+    otp = serializers.CharField(max_length=6)
+    def validate_otp(self, value):
+        if not value.isdigit():
+            raise serializers.ValidationError("OTP must be an integer")
+        return value
 
 
 class UserLoginSerializer(serializers.Serializer):

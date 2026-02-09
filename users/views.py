@@ -17,6 +17,9 @@ from .serializers import (EditUserProfileSerializer, OTPVerifyLoginSerializer,
                           PasswordResetRequestSerializer,
                           UserEmailLoginSerializer, UserLoginSerializer,
                           UserRegisterSerializer, VerifyEmailSerializer)
+from .services.user_service import UserEmailService
+from .services.email_service import EmailService
+from .services.otp_service import OTPService
 from .throttles import LoginThrottle
 
 
@@ -34,24 +37,13 @@ class UserRegisterView(APIView):
 class VerifyEmailView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
     throttle_classes = [UserRateThrottle]
-
     def post(self, request, *args, **kwargs):
         email = request.user.email
-        if not email:
-            return Response({"error": "you dont have an email"}, status=400)
-
-        if request.user.is_verified:
-            return Response("your email is already verified", status=status.HTTP_200_OK)
-
-        code = str(random.randint(100000, 999999))
-        EmailOTP.objects.update_or_create(email=email, defaults={"code": code})
-
-        send_mail(
-            subject="email verification",
-            message=f"your verification code is : {code}",
-            from_email=None,
-            recipient_list=[email],
-        )
+        ok, msg = UserEmailService.can_verify_email(email)
+        if not ok:
+            return Response({"message": msg}, status=status.HTTP_400_BAD_REQUEST)
+        code = OTPService.generate_otp(email)
+        EmailService.send_verification_email(email, code)
 
         return redirect("users:otp-verify")
 
@@ -63,28 +55,18 @@ class VerifyCodeView(APIView):
     def post(self, request, *args, **kwargs):
         serializer = VerifyEmailSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        code = serializer.validated_data["code"]
+        code = serializer.validated_data["otp"]
         email = request.user.email
 
-        try:
-            otp = EmailOTP.objects.get(email=email)
-        except EmailOTP.DoesNotExist:
-            return Response("there is no code for this email", status=400)
+        ok, msg = OTPService.verify_otp(email, code)
+        if not ok:
+            return Response({"message": msg}, status=status.HTTP_400_BAD_REQUEST)
+        request.user.is_verified = True
 
-        if otp.is_expired():
-            otp.delete()
-            return Response("code is expired", status=400)
-
-        if otp.code != code:
-            return Response("the giving code is incorrect", status=400)
-
-        otp.delete()
-        user = CustomUser.objects.get(email=email)
-        user.is_verified = True
-        user.save()
+        request.euser.save()
         return Response(
             "your email has been verified !", status=status.HTTP_200_OK
-        ), redirect("/")
+        )
 
 
 class EnableTwoFactorView(APIView):
