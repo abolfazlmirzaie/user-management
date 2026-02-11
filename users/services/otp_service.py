@@ -1,5 +1,7 @@
 import random
+
 from users.models import EmailOTP
+
 
 class OTPService:
     @staticmethod

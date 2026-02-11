@@ -2,12 +2,12 @@ from django.urls import path
 
 from .views import (EditProfileView, EnableTwoFactorView, OTPLoginView,
                     OTPVerifyLoginView, PasswordResetConfirmView,
-                    PasswordResetRequestView, UserLoginView, UserLogoutView,
-                    UserRegisterView, VerifyCodeView, VerifyEmailView,
-                    VerifyTwoFactorLogin, PlanListView)
+                    PasswordResetRequestView, PlanListView, UserLoginView,
+                    UserLogoutView, UserRegisterView, VerifyCodeView,
+                    VerifyEmailView, VerifyOTPLoginView, VerifyTwoFactorLogin)
 
 urlpatterns = [
-    path('register/', UserRegisterView.as_view(), name='user-register'),
+    path("register/", UserRegisterView.as_view(), name="user-register"),
     path("edit-profile/", EditProfileView.as_view(), name="edit_profile"),
     path(
         "enable-two-factor-login/",
@@ -20,6 +20,7 @@ urlpatterns = [
         name="verify-two-factor-login",
     ),
     path("login/", UserLoginView.as_view(), name="login"),
+    path("verify_login/", VerifyOTPLoginView.as_view(), name="verify_login"),
     path("plans/", PlanListView.as_view(), name="subscription_plan_list"),
     path("logout/", UserLogoutView.as_view(), name="logout"),
     path("email-verify/", VerifyEmailView.as_view(), name="email-verify"),

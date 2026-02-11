@@ -1,6 +1,22 @@
 version: '3.9'
 
 services:
+
+
+  celery:
+    build: .
+    container_name: celery_worker
+    command: celery -A user_management worker --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - web
+      - db
+
+
+
+
   web:
     build: .
     container_name: django
@@ -23,9 +39,8 @@ services:
   redis:
     image: redis:7.0.11-alpine
     container_name: redis_cache
-
-
-
+    ports:
+      - "6379:6379"
 
 
   db:
@@ -43,3 +58,5 @@ services:
 
 volumes:
   postgres_data:
+
+

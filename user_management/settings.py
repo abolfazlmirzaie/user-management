@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "users.apps.UsersConfig",
     "courses.apps.CoursesConfig",
-    "silk"
+    "silk",
 ]
 
 MIDDLEWARE = [
@@ -51,7 +51,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    'silk.middleware.SilkyMiddleware',
+    "silk.middleware.SilkyMiddleware",
 ]
 
 ROOT_URLCONF = "user_management.urls"
@@ -168,3 +168,7 @@ CACHES = {
         "LOCATION": "redis://redis:6379/0",
     }
 }
+
+
+CELERY_BROKER_URL = "redis://redis:6379/0"
+CELERY_RESULT_BACKEND = "redis://redis:6379/1"
