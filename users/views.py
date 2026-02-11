@@ -182,34 +182,7 @@ class OTPLoginView(APIView):
         )
 
 
-class OTPVerifyLoginView(APIView):
-    throttle_classes = [UserRateThrottle]
 
-    def post(self, request, *args, **kwargs):
-        serializer = OTPVerifyLoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        code = serializer.validated_data["code"]
-
-        # just for test the API
-        # you can get the EMAIL from session ----- email = request.session.get["email"]
-        email = serializer.validated_data["email"]
-
-        try:
-            otp = OTPLogin.objects.get(email=email)
-        except OTPLogin.DoesNotExist:
-            return Response({"message": "there is no code for this email"}, status=400)
-
-        if otp.is_expired():
-            otp.delete()
-            return Response({"message": "code is expired"}, status=400)
-
-        if otp.code != code:
-            return Response({"message": "the giving code is incorrect"}, status=400)
-
-        otp.delete()
-        user = CustomUser.objects.get(email=email)
-        login(request, user)
-        return Response({"message": "you are logged in"}, status=status.HTTP_200_OK)
 
 
 class VerifyTwoFactorLogin(APIView):
@@ -282,7 +255,6 @@ class PasswordResetConfirmView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-# views.py
 
 
 class PlanListView(APIView):
