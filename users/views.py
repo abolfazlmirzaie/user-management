@@ -1,25 +1,23 @@
-import random
-
 from django.contrib.auth import login, logout
-from django.core.mail import send_mail
-from django.shortcuts import redirect
 from rest_framework import permissions, status
-from rest_framework.generics import ListAPIView, RetrieveUpdateAPIView
-from rest_framework.permissions import (IsAuthenticated,
-                                        IsAuthenticatedOrReadOnly)
+from rest_framework.generics import RetrieveUpdateAPIView
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
-from .models import CustomUser
 from .models import CustomUser as User
-from .models import EmailOTP, OTPLogin, SubscriptionPlan
-from .serializers import (EditUserProfileSerializer, OTPSerializer,
-                          OTPVerifyLoginSerializer,
-                          PasswordResetConfirmSerializer,
-                          PasswordResetRequestSerializer,
-                          UserEmailLoginSerializer, UserLoginSerializer,
-                          UserRegisterSerializer)
+from .models import SubscriptionPlan
+from .serializers import (
+    EditUserProfileSerializer,
+    OTPSerializer,
+    OTPVerifyLoginSerializer,
+    PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer,
+    UserEmailLoginSerializer,
+    UserLoginSerializer,
+    UserRegisterSerializer,
+)
 from .services.email_service import EmailService
 from .services.otp_service import OTPService
 from .services.user_service import UserService
@@ -51,7 +49,7 @@ class VerifyEmailView(APIView):
         code = OTPService.generate_otp(email)
         EmailService.send_verification_email(email, code)
 
-        return redirect("users:otp-verify")
+        return Response("your code has been sent", status=status.HTTP_200_OK)
 
 
 class VerifyCodeView(APIView):
@@ -68,8 +66,8 @@ class VerifyCodeView(APIView):
         if not ok:
             return Response({"message": msg}, status=status.HTTP_400_BAD_REQUEST)
         request.user.is_verified = True
-
-        request.euser.save()
+        OTPService.delete_otp(email)
+        request.user.save()
         return Response("your email has been verified !", status=status.HTTP_200_OK)
 
 
@@ -131,87 +129,64 @@ class VerifyOTPLoginView(APIView):
 
         login(request, user)
         del request.session["pending_user_id"]
-
+        OTPService.delete_otp(user.email)
         return Response({"message": "you are logged in"}, status=status.HTTP_200_OK)
 
 
 class UserLogoutView(APIView):
     throttle_classes = [LoginThrottle]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        user = request.user
-        if user.is_authenticated:
-            logout(request)
-            return Response(
-                {"message": "you are logged out"}, status=status.HTTP_200_OK
-            )
-        else:
-            return Response(
-                {"message": "you are not logged in"}, status=status.HTTP_400_BAD_REQUEST
-            )
+
+        logout(request)
+
+        return Response({"message": "you are logged out"}, status=status.HTTP_200_OK)
 
 
-class OTPLoginView(APIView):
+class EmailLoginView(APIView):
     throttle_classes = [LoginThrottle]
 
     def post(self, request, *args, **kwargs):
         serializer = UserEmailLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data["email"]
+        user = User.objects.get(email=email)
 
-        try:
-            user = CustomUser.objects.get(email=email)
-        except CustomUser.DoesNotExist:
-            return Response({"message": "the giving email is incorrect"}, status=400)
+        code = OTPService.generate_otp(user.email)
+        EmailService.send_verification_email(email, code)
 
-        if not user.is_verified:
-            return Response("your email is al verified", status=status.HTTP_200_OK)
-
-        code = random.randint(100000, 999999)
-        request.session["email"] = email
-        OTPLogin.objects.update_or_create(email=email, defaults={"code": code})
-
-        send_mail(
-            subject="email verification",
-            message=f"your otp code is : {code}",
-            from_email=None,
-            recipient_list=[email],
-        )
+        request.session["pending_user_id"] = user.id
         return Response(
-            {"message": "your code has beem sent"}, status=status.HTTP_200_OK
+            {"message": "your code has beeد sent"}, status=status.HTTP_200_OK
         )
 
 
-
-
-
-class VerifyTwoFactorLogin(APIView):
+class VerifyOTPEmailLoginView(APIView):
     throttle_classes = [LoginThrottle]
 
     def post(self, request, *args, **kwargs):
         serializer = OTPVerifyLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+
+        user_id = request.session.get("pending_user_id")
+        if not user_id:
+            return Response(
+                {"message": "no pending login"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
         code = serializer.validated_data["code"]
+        user = User.objects.get(id=user_id)
 
-        # just for test API
-        # you can get the EMAIL from session ----- email = request.session.get["email"]
-        email = serializer.validated_data["email"]
+        ok, msg = OTPService.verify_otp(user.email, code)
 
-        try:
-            otp = EmailOTP.objects.get(email=email)
-        except EmailOTP.DoesNotExist:
-            return Response({"message": "there is no code for this email"}, status=400)
+        if not ok:
+            return Response({"message": msg}, status=status.HTTP_400_BAD_REQUEST)
 
-        if otp.is_expired():
-            otp.delete()
-            return Response({"message": "code is expired"}, status=400)
-
-        if otp.code != code:
-            return Response({"message": "the giving code is incorrect"}, status=400)
-
-        otp.delete()
-        user = CustomUser.objects.get(email=email)
+        OTPService.delete_otp(user.email)
         login(request, user)
+        del request.session["pending_user_id"]
+
         return Response({"message": "you are logged in"}, status=status.HTTP_200_OK)
 
 
@@ -226,6 +201,7 @@ class EditProfileView(RetrieveUpdateAPIView):
 
 class PasswordResetRequestView(APIView):
     throttle_classes = [LoginThrottle]
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data)
@@ -253,8 +229,6 @@ class PasswordResetConfirmView(APIView):
                 status=status.HTTP_200_OK,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
 
 
 class PlanListView(APIView):

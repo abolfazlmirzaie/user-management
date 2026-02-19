@@ -1,10 +1,20 @@
 from django.urls import path
 
-from .views import (EditProfileView, EnableTwoFactorView, OTPLoginView,
-                    OTPVerifyLoginView, PasswordResetConfirmView,
-                    PasswordResetRequestView, PlanListView, UserLoginView,
-                    UserLogoutView, UserRegisterView, VerifyCodeView,
-                    VerifyEmailView, VerifyOTPLoginView, VerifyTwoFactorLogin)
+from .views import (
+    EditProfileView,
+    EmailLoginView,
+    EnableTwoFactorView,
+    PasswordResetConfirmView,
+    PasswordResetRequestView,
+    PlanListView,
+    UserLoginView,
+    UserLogoutView,
+    UserRegisterView,
+    VerifyCodeView,
+    VerifyEmailView,
+    VerifyOTPEmailLoginView,
+    VerifyOTPLoginView,
+)
 
 urlpatterns = [
     path("register/", UserRegisterView.as_view(), name="user-register"),
@@ -15,9 +25,9 @@ urlpatterns = [
         name="enable-two-factor-login",
     ),
     path(
-        "verify-two-factor-login/",
-        VerifyTwoFactorLogin.as_view(),
-        name="verify-two-factor-login",
+        "verify-email/",
+        VerifyEmailView.as_view(),
+        name="verify-email",
     ),
     path("login/", UserLoginView.as_view(), name="login"),
     path("verify_login/", VerifyOTPLoginView.as_view(), name="verify_login"),
@@ -25,8 +35,10 @@ urlpatterns = [
     path("logout/", UserLogoutView.as_view(), name="logout"),
     path("email-verify/", VerifyEmailView.as_view(), name="email-verify"),
     path("otp-verify/", VerifyCodeView.as_view(), name="otp-verify"),
-    path("otp-login/", OTPLoginView.as_view(), name="otp-login"),
-    path("otp-login-verify/", OTPVerifyLoginView.as_view(), name="otp-login-verify"),
+    path("email-login/", EmailLoginView.as_view(), name="email-login"),
+    path(
+        "otp-login-verify/", VerifyOTPEmailLoginView.as_view(), name="otp-login-verify"
+    ),
     path(
         "password-reset-request/",
         PasswordResetRequestView.as_view(),

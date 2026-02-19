@@ -1,7 +1,7 @@
+import email
 import re
 
-from django.contrib.auth import (authenticate, get_user_model,
-                                 password_validation)
+from django.contrib.auth import authenticate, get_user_model, password_validation
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
@@ -81,10 +81,19 @@ class UserLoginSerializer(serializers.Serializer):
 
 class UserEmailLoginSerializer(serializers.Serializer):
     email = serializers.CharField(required=True)
+    user = CustomUser.objects.get(email=email)
+
+    def validate(self, data):
+        try:
+            user = CustomUser.objects.get(data["user"].email)
+        except CustomUser.DoesNotExist:
+            raise serializers.ValidationError("Invalid email")
+        if not user.is_verified:
+            raise serializers.ValidationError("invalid email")
+        return data
 
 
 class OTPVerifyLoginSerializer(serializers.Serializer):
-    email = serializers.CharField(required=True)
     code = serializers.CharField(max_length=6)
 
 
