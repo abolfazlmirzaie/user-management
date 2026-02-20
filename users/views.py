@@ -158,7 +158,7 @@ class EmailLoginView(APIView):
 
         request.session["pending_user_id"] = user.id
         return Response(
-            {"message": "your code has beeد sent"}, status=status.HTTP_200_OK
+            {"message": "your code has been sent"}, status=status.HTTP_200_OK
         )
 
 
