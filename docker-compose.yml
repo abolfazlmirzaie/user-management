@@ -20,6 +20,7 @@ services:
   web:
     build: .
     container_name: django
+    entrypoint: [ "/app/entrypoint.sh" ]
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
@@ -34,6 +35,7 @@ services:
       - DB_PASSWORD=postgres
       - DB_HOST=db
       - DB_PORT=5432
+
 
 
   redis:
