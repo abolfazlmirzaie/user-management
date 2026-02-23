@@ -37,7 +37,7 @@ class UserRegisterView(APIView):
         )
 
 
-class VerifyEmailView(APIView):
+class VerifyUserEmailView(APIView):
     permission_classes = (permissions.IsAuthenticated,)
     throttle_classes = [UserRateThrottle]
 

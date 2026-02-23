@@ -11,9 +11,8 @@ from .views import (
     UserLogoutView,
     UserRegisterView,
     VerifyCodeView,
-    VerifyEmailView,
     VerifyOTPEmailLoginView,
-    VerifyOTPLoginView,
+    VerifyOTPLoginView, VerifyUserEmailView,
 )
 
 urlpatterns = [
@@ -26,14 +25,13 @@ urlpatterns = [
     ),
     path(
         "verify-email/",
-        VerifyEmailView.as_view(),
+        VerifyUserEmailView.as_view(),
         name="verify-email",
     ),
     path("login/", UserLoginView.as_view(), name="login"),
     path("verify_login/", VerifyOTPLoginView.as_view(), name="verify_login"),
     path("plans/", PlanListView.as_view(), name="subscription_plan_list"),
     path("logout/", UserLogoutView.as_view(), name="logout"),
-    path("email-verify/", VerifyEmailView.as_view(), name="email-verify"),
     path("otp-verify/", VerifyCodeView.as_view(), name="otp-verify"),
     path("email-login/", EmailLoginView.as_view(), name="email-login"),
     path(

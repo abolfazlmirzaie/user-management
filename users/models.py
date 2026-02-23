@@ -31,23 +31,24 @@ class Subscription(models.Model):
         CustomUser, on_delete=models.CASCADE, related_name="subscriptions"
     )
     plan = models.ForeignKey(
-        SubscriptionPlan, on_delete=models.CASCADE, related_name="subscription_plan"
+        SubscriptionPlan, on_delete=models.CASCADE, related_name="subscriptions"
     )
-    start_date = models.DateTimeField(null=True, blank=True)
-    end_date = models.DateTimeField(null=True, blank=True)
-    active = models.BooleanField(default=True)
+    start_date = models.DateTimeField(auto_now_add=True)
+    end_date = models.DateTimeField()
 
     def save(self, *args, **kwargs):
-        if not self.start_date:
-            self.start_date = timezone.now()
         if not self.end_date:
-            self.end_date = self.start_date + datetime.timedelta(
+            self.end_date = timezone.now() + datetime.timedelta(
                 days=self.plan.duration_days
             )
         super().save(*args, **kwargs)
 
+    @property
     def is_active(self):
-        return self.active and self.end_date > timezone.now()
+        return self.end_date > timezone.now()
+
+    def __str__(self):
+        return f"{self.user} - {self.plan.name}"
 
 
 class EmailOTP(models.Model):
