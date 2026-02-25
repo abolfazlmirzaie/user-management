@@ -4,11 +4,12 @@ from autoslug import AutoSlugField
 from moviepy import VideoFileClip
 
 
-
 class Course(models.Model):
     title = models.CharField(max_length=150)
     description = models.TextField()
-    teacher = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="courses")
+    teacher = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, related_name="courses"
+    )
     image = models.ImageField(upload_to="courses/image", blank=True)
     level = models.CharField(max_length=50, default="beginner")
     is_premium = models.BooleanField(default=False)
@@ -19,17 +20,20 @@ class Course(models.Model):
         return self.title
 
 
-
 class Section(models.Model):
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="sections")
+    course = models.ForeignKey(
+        Course, on_delete=models.CASCADE, related_name="sections"
+    )
     title = models.CharField(max_length=150)
-
 
     def __str__(self):
         return f"{self.course.title} - {self.title}"
 
+
 class Lesson(models.Model):
-    section = models.ForeignKey(Section, on_delete=models.CASCADE, related_name="lessons")
+    section = models.ForeignKey(
+        Section, on_delete=models.CASCADE, related_name="lessons"
+    )
     title = models.CharField(max_length=150)
     description = models.TextField(null=True, blank=True)
     lesson_number = models.PositiveIntegerField(default=1)
@@ -37,6 +41,7 @@ class Lesson(models.Model):
     duration_minute = models.PositiveIntegerField(default=0)
     duration_second = models.PositiveIntegerField(default=0)
     video = models.FileField(upload_to="courses/lessons/video", blank=True)
+
     def save(self, *args, **kwargs):
         super().save(*args, **kwargs)
 
@@ -53,7 +58,10 @@ class Lesson(models.Model):
             self.duration_minute = minutes
             self.duration_second = seconds
 
-            super().save(update_fields=["duration_hour", "duration_minute", "duration_second"])
+            super().save(
+                update_fields=["duration_hour", "duration_minute", "duration_second"]
+            )
+
     @property
     def duration(self):
         if self.duration_hour == 0:
@@ -66,8 +74,12 @@ class Lesson(models.Model):
 
 
 class Comment(models.Model):
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="comments")
-    author = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="comments")
+    course = models.ForeignKey(
+        Course, on_delete=models.CASCADE, related_name="comments"
+    )
+    author = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, related_name="comments"
+    )
     content = models.TextField(max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
     is_approved = models.BooleanField(default=False)
@@ -77,11 +89,14 @@ class Comment(models.Model):
 
 
 class Requirement(models.Model):
-    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="requirements")
+    course = models.ForeignKey(
+        Course, on_delete=models.CASCADE, related_name="requirements"
+    )
     text = models.CharField(max_length=255)
 
     def __str__(self):
         return self.text
+
 
 class TeacherProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
@@ -94,7 +109,7 @@ class TeacherProfile(models.Model):
 
 
 class Category(models.Model):
-    course = models.ManyToManyField(Course,  related_name="categories")
+    course = models.ManyToManyField(Course, related_name="categories")
     title = models.CharField(max_length=150)
     slug = AutoSlugField(populate_from="title", unique=True)
 

@@ -1,7 +1,7 @@
 from .models import Course
 from rest_framework.generics import ListAPIView
 from .pagination import CoursePageNumberPagination
-from . serializers import CourseSerializer
+from .serializers import CourseSerializer
 from django.contrib.postgres.search import TrigramSimilarity
 
 
@@ -11,15 +11,16 @@ class CourseListAPIView(ListAPIView):
     ordering_fields = ["created_at", "title", "level"]
 
     def get_queryset(self):
-        queryset = Course.objects.all() \
-            .select_related("teacher")
+        queryset = Course.objects.all().select_related("teacher")
 
         search = self.request.query_params.get("search")
 
         if search and len(search) > 2:
-            queryset = queryset.annotate(
-                similarity=TrigramSimilarity("title", search)
-            ).filter(similarity__gt=0.2).order_by("-similarity")
+            queryset = (
+                queryset.annotate(similarity=TrigramSimilarity("title", search))
+                .filter(similarity__gt=0.2)
+                .order_by("-similarity")
+            )
 
         level = self.request.query_params.get("level")
         if level:

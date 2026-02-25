@@ -12,7 +12,8 @@ from .views import (
     UserRegisterView,
     VerifyCodeView,
     VerifyOTPEmailLoginView,
-    VerifyOTPLoginView, VerifyUserEmailView,
+    VerifyOTPLoginView,
+    VerifyUserEmailView,
 )
 
 urlpatterns = [

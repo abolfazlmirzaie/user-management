@@ -82,7 +82,6 @@ class UserLoginSerializer(serializers.Serializer):
 class UserEmailLoginSerializer(serializers.Serializer):
     email = serializers.CharField(required=True)
 
-
     def validate(self, data):
         try:
             user = CustomUser.objects.get(data["user"].email)

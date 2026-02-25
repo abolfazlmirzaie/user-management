@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from . models import Course
+from .models import Course
 
 
 class CourseSerializer(serializers.ModelSerializer):
@@ -8,7 +8,17 @@ class CourseSerializer(serializers.ModelSerializer):
 
     def get_total_duration(self, obj):
         from .services.course_service import CourseService
+
         return CourseService.get_total_duration(obj.id)
+
     class Meta:
         model = Course
-        fields =["id", "title", "teacher", "level", "total_duration", "is_premium", "image"]
+        fields = [
+            "id",
+            "title",
+            "teacher",
+            "level",
+            "total_duration",
+            "is_premium",
+            "image",
+        ]
