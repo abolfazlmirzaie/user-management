@@ -16,10 +16,9 @@ class CustomUserAdmin(UserAdmin):
             {
                 "fields": (
                     "username",
+                    "full_name",
                     "email",
                     "profile_picture",
-                    "first_name",
-                    "last_name",
                     "password",
                 )
             },

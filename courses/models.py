@@ -1,13 +1,15 @@
 from django.db import models
 from users.models import CustomUser
 from autoslug import AutoSlugField
+from moviepy import VideoFileClip
+
 
 
 class Course(models.Model):
     title = models.CharField(max_length=150)
     description = models.TextField()
     teacher = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="courses")
-    image = models.ImageField(upload_to="courses/", blank=True)
+    image = models.ImageField(upload_to="courses/image", blank=True)
     level = models.CharField(max_length=50, default="beginner")
     is_premium = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -21,11 +23,7 @@ class Course(models.Model):
 class Section(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="sections")
     title = models.CharField(max_length=150)
-    order = models.PositiveIntegerField(default=1)
 
-
-    class Meta:
-        ordering = ['order']
 
     def __str__(self):
         return f"{self.course.title} - {self.title}"
@@ -34,12 +32,34 @@ class Lesson(models.Model):
     section = models.ForeignKey(Section, on_delete=models.CASCADE, related_name="lessons")
     title = models.CharField(max_length=150)
     description = models.TextField(null=True, blank=True)
-    order = models.PositiveIntegerField(default=1)
     lesson_number = models.PositiveIntegerField(default=1)
+    duration_hour = models.PositiveIntegerField(default=0)
     duration_minute = models.PositiveIntegerField(default=0)
+    duration_second = models.PositiveIntegerField(default=0)
+    video = models.FileField(upload_to="courses/lessons/video", blank=True)
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
 
-    class Meta:
-        ordering = ['order']
+        if self.video:
+            clip = VideoFileClip(self.video.path)
+            total_seconds = int(clip.duration)
+            clip.close()
+
+            hours = total_seconds // 3600
+            minutes = (total_seconds % 3600) // 60
+            seconds = total_seconds % 60
+
+            self.duration_hour = hours
+            self.duration_minute = minutes
+            self.duration_second = seconds
+
+            super().save(update_fields=["duration_hour", "duration_minute", "duration_second"])
+    @property
+    def duration(self):
+        if self.duration_hour == 0:
+            return f"{self.duration_minute}:{self.duration_second:02d}"
+
+        return f"{self.duration_hour}:{self.duration_minute:02d}:{self.duration_second:02d}"
 
     def __str__(self):
         return self.title

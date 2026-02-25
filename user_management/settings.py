@@ -150,6 +150,9 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.AnonRateThrottle",
         "rest_framework.throttling.UserRateThrottle",
     ],
+    "DEFAULT_FILTER_BACKENDS": [
+        "rest_framework.filters.SearchFilter",
+    ],
     "DEFAULT_THROTTLE_RATES": {
         "anon": "10/minute",
         "user": "15/minute",
@@ -172,3 +175,5 @@ CACHES = {
 
 CELERY_BROKER_URL = "redis://redis:6379/0"
 CELERY_RESULT_BACKEND = "redis://redis:6379/1"
+
+

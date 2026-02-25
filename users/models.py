@@ -6,6 +6,7 @@ from django.utils import timezone
 
 
 class CustomUser(AbstractUser):
+    full_name = models.CharField("full_name", max_length=100, blank=True, null=True)
     email = models.EmailField(unique=True, blank=True, null=True)
     is_verified = models.BooleanField(default=False)
     two_factor_enabled = models.BooleanField(default=False)
