@@ -11,8 +11,19 @@ class Course(models.Model):
         CustomUser, on_delete=models.CASCADE, related_name="courses"
     )
     image = models.ImageField(upload_to="courses/image", blank=True)
-    level = models.CharField(max_length=50, default="beginner")
+    LEVEL_CHOICES = [
+        ('beginner', 'Beginner'),
+        ('medium', 'Medium'),
+        ('advance', 'Advance'),
+    ]
+
+    level = models.CharField(
+        max_length=20,
+        choices=LEVEL_CHOICES,
+        default='beginner'
+    )
     is_premium = models.BooleanField(default=False)
+    price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     created_at = models.DateTimeField(auto_now_add=True)
     slug = AutoSlugField(max_length=150, unique=True, populate_from="title")
 
@@ -80,6 +91,7 @@ class Comment(models.Model):
     author = models.ForeignKey(
         CustomUser, on_delete=models.CASCADE, related_name="comments"
     )
+    parent = models.ForeignKey("self", on_delete=models.CASCADE, related_name="replies", null=True, blank=True)
     content = models.TextField(max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
     is_approved = models.BooleanField(default=False)
@@ -87,6 +99,8 @@ class Comment(models.Model):
     def __str__(self):
         return f"{self.author.username} - {self.course.title}"
 
+    def get_parent_comments(self):
+        return Comment.objects.filter(parent=None)
 
 class Requirement(models.Model):
     course = models.ForeignKey(
@@ -115,3 +129,28 @@ class Category(models.Model):
 
     def __str__(self):
         return self.title
+
+
+
+class ContactUs(models.Model):
+    email = models.EmailField()
+    phone = models.CharField(max_length=11)
+    address = models.CharField(max_length=120)
+
+    def __str__(self):
+        return self.email
+
+class Enrollment(models.Model):
+    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="enrollment")
+    course = models.OneToOneField(Course, on_delete=models.CASCADE, related_name="students")
+    enrollment_date = models.DateField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("user", "course")
+
+    def __str__(self):
+        return f"{self.user.username} - {self.course.title}"
+
+
+
+

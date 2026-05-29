@@ -10,7 +10,7 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import serializers
 
-from users.models import CustomUser, EmailOTP, SubscriptionPlan
+from users.models import CustomUser, EmailOTP, SubscriptionPlan, Ticket
 
 from .validators import PasswordValidator
 
@@ -163,3 +163,14 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         self.user.set_password(self.validated_data["new_password"])
         self.user.save()
         return self.user
+
+
+class TicketSerializer(serializers.ModelSerializer):
+    user = serializers.CharField(read_only=True)
+    title = serializers.CharField(max_length=150)
+    description = serializers.CharField(max_length=500)
+
+    class Meta:
+        model = Ticket
+        fields = ("user", "title", "description")
+        read_only_fields = ("user", "created_at", "is_replied", "replay_content")

@@ -124,3 +124,37 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiY
 ###
 
 GET localhost:8000/course-list/
+
+###
+POST http://localhost:8000/api/auth/tickets/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc3MjIzMTc5LCJpYXQiOjE3NzcyMjI4NzksImp0aSI6IjRkYWRmOTQ1MGY3MzRiZDI4OWRhN2JiODM0YTQ1MjU0IiwidXNlcl9pZCI6IjEifQ.Rm1eV3-rwvG2LEo9x9HCy-xZ6dlaweLPTI6M_GyoTz0
+Content-Type: application/json
+
+{
+  "title" : "dfed",
+  "description" : "sryesr"
+}
+###
+GET localhost:8000/api/auth/tickets/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc3MjM0Nzk1LCJpYXQiOjE3NzcyMzQ0OTUsImp0aSI6ImM2ZWU2Njk4OWIzZTRjYmRiZGM1NWIzZWQxNGFjZGQ2IiwidXNlcl9pZCI6IjEifQ.e1Er-2Wnz2xSUa71LhBi3ur7HQ-APyaqyvuDFeyw11E
+###
+
+POST localhost:8000/courses/python/comments/create/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc3NTc3ODM3LCJpYXQiOjE3Nzc1Nzc1MzcsImp0aSI6IjE5NTViMjRkZTdiMDQ1MDZhNzY0MGJmNjVhZjg5ZmU1IiwidXNlcl9pZCI6IjEifQ.c0de4-Hi_1EUvEzrkxKum87Jn0DBVs3rthKhMGxl2VI
+Content-Type: application/json
+
+{
+  "content" : "hello",
+  "course" : "3"
+}
+###
+
+POST localhost:8000/courses/python/enroll/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc4NDQ4ODg0LCJpYXQiOjE3Nzg0NDg1ODQsImp0aSI6IjYzMDZhNDlkMzM2YTQxNTI5ZGIwYjE4YjQ4MjYwODkwIiwidXNlcl9pZCI6IjEifQ.tkXw_QJt9zPjFsbeU15w7AX7vwyRdwVVNVxxf30nevg
+###
+GET localhost:8000/courses/python/students/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc3ODIxMjI5LCJpYXQiOjE3Nzc4MjA5MjksImp0aSI6Ijc3YThmZGJjNDRhODQ0MTZiYzYxMDRlMGNmZjk0ZGUyIiwidXNlcl9pZCI6IjEifQ.oGeXyLMFGICjGxjUmwVvsn1mkxI17acWwuB7H5ilpy0
+###
+
+GET localhost:8000/my/courses/
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc4NDQ4ODg0LCJpYXQiOjE3Nzg0NDg1ODQsImp0aSI6IjYzMDZhNDlkMzM2YTQxNTI5ZGIwYjE4YjQ4MjYwODkwIiwidXNlcl9pZCI6IjEifQ.tkXw_QJt9zPjFsbeU15w7AX7vwyRdwVVNVxxf30nevg

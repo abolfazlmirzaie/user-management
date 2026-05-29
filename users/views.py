@@ -1,13 +1,13 @@
 from django.contrib.auth import login, logout
 from rest_framework import permissions, status
-from rest_framework.generics import RetrieveUpdateAPIView
+from rest_framework.generics import RetrieveUpdateAPIView, ListCreateAPIView
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from .models import CustomUser as User
-from .models import SubscriptionPlan
+from .models import SubscriptionPlan, Ticket
 from .serializers import (
     EditUserProfileSerializer,
     OTPSerializer,
@@ -17,6 +17,7 @@ from .serializers import (
     UserEmailLoginSerializer,
     UserLoginSerializer,
     UserRegisterSerializer,
+    TicketSerializer,
 )
 from .services.email_service import EmailService
 from .services.otp_service import OTPService
@@ -245,3 +246,19 @@ class PlanListView(APIView):
             for plan in plans
         ]
         return Response(data)
+
+
+class TicketListCreateView(ListCreateAPIView):
+    throttle_classes = [LoginThrottle]
+    permission_classes = [IsAuthenticated]
+    serializer_class = TicketSerializer
+    def get_queryset(self):
+        return Ticket.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+        if serializer.is_valid():
+            serializer.save()
+        return Response(
+            data={"message": "your ticket has been created"},
+        )

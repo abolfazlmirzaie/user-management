@@ -14,6 +14,7 @@ from .views import (
     VerifyOTPEmailLoginView,
     VerifyOTPLoginView,
     VerifyUserEmailView,
+    TicketListCreateView
 )
 
 urlpatterns = [
@@ -30,6 +31,7 @@ urlpatterns = [
         name="verify-email",
     ),
     path("login/", UserLoginView.as_view(), name="login"),
+    path("tickets/", TicketListCreateView.as_view(), name="ticket"),
     path("verify/login/", VerifyOTPLoginView.as_view(), name="verify_login"),
     path("plans/", PlanListView.as_view(), name="subscription_plan_list"),
     path("logout/", UserLogoutView.as_view(), name="logout"),

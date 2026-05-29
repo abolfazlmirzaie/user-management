@@ -1,5 +1,6 @@
 from django.contrib import admin
-from .models import Course, Category, Comment, Section, Lesson, Requirement
+from .models import Course, Category, Comment, Section, Lesson, Requirement, ContactUs
+
 
 
 class CategoryInline(admin.TabularInline):
@@ -7,9 +8,6 @@ class CategoryInline(admin.TabularInline):
     extra = 1
 
 
-class SectionInline(admin.TabularInline):
-    model = Section
-    extra = 1
 
 
 class LessonInline(admin.TabularInline):
@@ -17,18 +15,35 @@ class LessonInline(admin.TabularInline):
     extra = 1
 
 
+
+
+
+class RequirementInline(admin.TabularInline):
+    model = Requirement
+    extra = 1
+    fields = ('text',)
+
+
+class SectionInline(admin.TabularInline):
+    model = Section
+    extra = 2
+
+    inlines = [LessonInline]
+
+
+
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
     list_display = ("title", "teacher", "level", "is_premium")
     list_filter = ("level", "is_premium")
     search_fields = ("title", "teacher__first_name", "teacher__last_name")
-    inlines = [CategoryInline, SectionInline]
+    inlines = [CategoryInline, RequirementInline, SectionInline]
 
 
 @admin.register(Section)
 class SectionAdmin(admin.ModelAdmin):
     list_display = ("title", "course")
-    search_fields = ("title",)
+    search_fields = ("title", "course__title")
     inlines = [LessonInline]
 
 
@@ -38,12 +53,12 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ("title",)
 
 
-@admin.register(Lesson)
-class LessonAdmin(admin.ModelAdmin):
-    list_display = ("title", "section", "duration_minute", "duration")
-    search_fields = ("title",)
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ("course", "author", "parent", "content", "is_approved")
+    search_fields = ("course__title", "author__username")
 
 
-@admin.register(Requirement)
-class RequirementAdmin(admin.ModelAdmin):
-    list_display = ("text", "course")
+
+admin.site.register(ContactUs)
