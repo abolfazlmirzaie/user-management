@@ -252,6 +252,7 @@ class TicketListCreateView(ListCreateAPIView):
     throttle_classes = [LoginThrottle]
     permission_classes = [IsAuthenticated]
     serializer_class = TicketSerializer
+
     def get_queryset(self):
         return Ticket.objects.filter(user=self.request.user)
 

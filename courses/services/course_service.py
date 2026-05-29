@@ -1,5 +1,6 @@
 from django.db.models import F, ExpressionWrapper, IntegerField, Sum
 
+
 class CourseService:
     @staticmethod
     def get_total_duration(course_id: int) -> str:

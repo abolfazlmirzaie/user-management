@@ -1,17 +1,30 @@
 from django.shortcuts import redirect
 from rest_framework import status
 from rest_framework.exceptions import NotFound
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, IsAdminUser
+from rest_framework.permissions import (
+    IsAuthenticatedOrReadOnly,
+    IsAuthenticated,
+    IsAdminUser,
+)
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import Course, ContactUs, Category, Comment, Lesson, Enrollment
 from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView
 from .pagination import CoursePageNumberPagination
-from .serializers import CourseSerializer, CourseDetailSerializer, ContactUsSerializer, \
-    CategorySerializer, CategoryDetailSerializer, CommentSerializer, LessonSerializer, EnrollmentSerializer
+from .serializers import (
+    CourseSerializer,
+    CourseDetailSerializer,
+    ContactUsSerializer,
+    CategorySerializer,
+    CategoryDetailSerializer,
+    CommentSerializer,
+    LessonSerializer,
+    EnrollmentSerializer,
+)
 from django.contrib.postgres.search import TrigramSimilarity
 from users.throttles import LoginThrottle
+
 
 class CourseListAPIView(ListAPIView):
     serializer_class = CourseSerializer
@@ -45,18 +58,16 @@ class CourseListAPIView(ListAPIView):
 
         return queryset
 
+
 class CourseDetailAPIView(RetrieveAPIView):
     serializer_class = CourseDetailSerializer
     queryset = Course.objects.all()
     lookup_field = "slug"
 
 
-
-
 class ContactUsAPIView(ListAPIView):
     serializer_class = ContactUsSerializer
     queryset = ContactUs.objects.all()
-
 
 
 class CategoryListAPIView(ListAPIView):
@@ -70,7 +81,6 @@ class CategoryDetailAPIView(RetrieveAPIView):
     lookup_field = "slug"
 
 
-
 class CommentListAPIView(ListAPIView):
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -81,32 +91,37 @@ class CommentListAPIView(ListAPIView):
         if course_slug:
             try:
                 course = Course.objects.get(slug=course_slug)
-                return Comment.objects.filter(course=course, parent=None, is_approved=True).order_by("-created_at")
+                return Comment.objects.filter(
+                    course=course, parent=None, is_approved=True
+                ).order_by("-created_at")
             except Course.DoesNotExist:
                 raise NotFound("Course does not exist")
         else:
             raise NotFound("Course slug is required")
 
+
 class CommentCreateAPIView(CreateAPIView):
     serializer_class = CommentSerializer
     permission_classes = [IsAuthenticated]
     throttle_classes = [LoginThrottle]
+
     def get_serializer_context(self):
         context = super().get_serializer_context()
-        context['request'] = self.request
+        context["request"] = self.request
 
         parent_id = self.request.data.get("parent_id")
         if parent_id:
             try:
                 parent_comment = Comment.objects.filter(id=parent_id)
-                context['parent_id'] = parent_comment.first().id
+                context["parent_id"] = parent_comment.first().id
 
             except Comment.DoesNotExist:
                 raise NotFound("Parent comment does not exist")
 
         else:
-            context['parent_id'] = None
+            context["parent_id"] = None
             return context
+
 
 class CourseLessonListAPIView(ListAPIView):
     serializer_class = LessonSerializer
@@ -119,7 +134,9 @@ class CourseLessonListAPIView(ListAPIView):
 
         course = Course.objects.get(slug=course_slug)
 
-        lessons = Lesson.objects.filter(section__course=course).order_by( 'section__title', 'title')
+        lessons = Lesson.objects.filter(section__course=course).order_by(
+            "section__title", "title"
+        )
         return lessons
 
 
@@ -143,6 +160,7 @@ class EnrollCourseAPIView(APIView):
 
         return Response(status=status.HTTP_201_CREATED)
 
+
 class MyCourseListAPIView(ListAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = CourseSerializer
@@ -150,6 +168,7 @@ class MyCourseListAPIView(ListAPIView):
     def get_queryset(self):
         user = self.request.user
         return Course.objects.filter(students__user=user)
+
 
 class CourseStudentListAPIView(ListAPIView):
     permission_classes = [IsAuthenticated, IsAdminUser]

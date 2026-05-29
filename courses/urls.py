@@ -1,8 +1,18 @@
 from django.urls import path
 
-from courses.views import CourseListAPIView, CourseDetailAPIView, ContactUsAPIView, CategoryListAPIView, \
-    CategoryDetailAPIView, CommentListAPIView, CommentCreateAPIView, CourseLessonListAPIView, MyCourseListAPIView, \
-    CourseStudentListAPIView, EnrollCourseAPIView
+from courses.views import (
+    CourseListAPIView,
+    CourseDetailAPIView,
+    ContactUsAPIView,
+    CategoryListAPIView,
+    CategoryDetailAPIView,
+    CommentListAPIView,
+    CommentCreateAPIView,
+    CourseLessonListAPIView,
+    MyCourseListAPIView,
+    CourseStudentListAPIView,
+    EnrollCourseAPIView,
+)
 
 urlpatterns = [
     path("courses/", CourseListAPIView.as_view()),

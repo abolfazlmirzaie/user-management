@@ -12,16 +12,12 @@ class Course(models.Model):
     )
     image = models.ImageField(upload_to="courses/image", blank=True)
     LEVEL_CHOICES = [
-        ('beginner', 'Beginner'),
-        ('medium', 'Medium'),
-        ('advance', 'Advance'),
+        ("beginner", "Beginner"),
+        ("medium", "Medium"),
+        ("advance", "Advance"),
     ]
 
-    level = models.CharField(
-        max_length=20,
-        choices=LEVEL_CHOICES,
-        default='beginner'
-    )
+    level = models.CharField(max_length=20, choices=LEVEL_CHOICES, default="beginner")
     is_premium = models.BooleanField(default=False)
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -91,7 +87,9 @@ class Comment(models.Model):
     author = models.ForeignKey(
         CustomUser, on_delete=models.CASCADE, related_name="comments"
     )
-    parent = models.ForeignKey("self", on_delete=models.CASCADE, related_name="replies", null=True, blank=True)
+    parent = models.ForeignKey(
+        "self", on_delete=models.CASCADE, related_name="replies", null=True, blank=True
+    )
     content = models.TextField(max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)
     is_approved = models.BooleanField(default=False)
@@ -101,6 +99,7 @@ class Comment(models.Model):
 
     def get_parent_comments(self):
         return Comment.objects.filter(parent=None)
+
 
 class Requirement(models.Model):
     course = models.ForeignKey(
@@ -131,7 +130,6 @@ class Category(models.Model):
         return self.title
 
 
-
 class ContactUs(models.Model):
     email = models.EmailField()
     phone = models.CharField(max_length=11)
@@ -140,9 +138,14 @@ class ContactUs(models.Model):
     def __str__(self):
         return self.email
 
+
 class Enrollment(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name="enrollment")
-    course = models.OneToOneField(Course, on_delete=models.CASCADE, related_name="students")
+    user = models.OneToOneField(
+        CustomUser, on_delete=models.CASCADE, related_name="enrollment"
+    )
+    course = models.OneToOneField(
+        Course, on_delete=models.CASCADE, related_name="students"
+    )
     enrollment_date = models.DateField(auto_now_add=True)
 
     class Meta:
@@ -150,7 +153,3 @@ class Enrollment(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.course.title}"
-
-
-
-

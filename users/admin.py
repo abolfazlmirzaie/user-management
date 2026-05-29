@@ -57,6 +57,8 @@ class SubscriptionPlanAdmin(admin.ModelAdmin):
     list_display = ("name", "price", "duration_days")
     search_fields = ("name",)
     ordering = ("price",)
+
+
 admin.site.register(EmailOTP)
 
 

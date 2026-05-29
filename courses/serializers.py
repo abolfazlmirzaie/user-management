@@ -1,7 +1,15 @@
 from rest_framework import serializers
 from rest_framework.fields import ReadOnlyField
 
-from .models import Course, ContactUs, Category, Requirement, Comment, Lesson, Enrollment
+from .models import (
+    Course,
+    ContactUs,
+    Category,
+    Requirement,
+    Comment,
+    Lesson,
+    Enrollment,
+)
 
 
 class CourseSerializer(serializers.ModelSerializer):
@@ -29,13 +37,13 @@ class CourseSerializer(serializers.ModelSerializer):
 class RequirementSerializer(serializers.ModelSerializer):
     class Meta:
         model = Requirement
-        fields = ['course', "text"]
-
+        fields = ["course", "text"]
 
 
 class CourseDetailSerializer(serializers.ModelSerializer):
     total_duration = serializers.SerializerMethodField()
     teacher = serializers.CharField(source="teacher.full_name")
+
     # requirement = serializers.SerializerMethodField(RequirementSerializer)
     def get_total_duration(self, obj):
         from .services.course_service import CourseService
@@ -54,8 +62,7 @@ class CourseDetailSerializer(serializers.ModelSerializer):
             "image",
             "created_at",
             "description",
-             "price"
-
+            "price",
         ]
 
 
@@ -65,13 +72,14 @@ class ContactUsSerializer(serializers.ModelSerializer):
         fields = ["email", "phone", "address"]
 
 
-
-
-
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = ["id", "title",]
+        fields = [
+            "id",
+            "title",
+        ]
+
 
 class CourseSerializerForCategory(serializers.RelatedField):
     def to_representation(self, value):
@@ -82,11 +90,11 @@ class CourseSerializerForCategory(serializers.RelatedField):
 
 
 class CategoryDetailSerializer(serializers.ModelSerializer):
-    courses = CourseSerializerForCategory(source='course', many=True, read_only=True)
+    courses = CourseSerializerForCategory(source="course", many=True, read_only=True)
+
     class Meta:
         model = Category
         fields = ["id", "title", "courses"]
-
 
 
 class CommentSerializer(serializers.ModelSerializer):
@@ -95,7 +103,7 @@ class CommentSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Comment
-        fields = [ "user", "course", "parent", "content", "created_at", "replise"]
+        fields = ["user", "course", "parent", "content", "created_at", "replise"]
 
     def get_replise(self, obj):
         replies = obj.replies.filter(is_approved=True)
@@ -113,7 +121,7 @@ class CommentSerializer(serializers.ModelSerializer):
             user=request.user,
             parent=parent_id,
             content=validated_data[self.context.get("content")],
-            **validated_data
+            **validated_data,
         )
         return comment
 
@@ -123,8 +131,8 @@ class LessonSerializer(serializers.ModelSerializer):
         model = Lesson
         fields = ["id", "title", "description", "lesson_number", "duration", "video"]
 
-class EnrollmentSerializer(serializers.ModelSerializer):
 
+class EnrollmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Enrollment
         fields = ["user", "course"]

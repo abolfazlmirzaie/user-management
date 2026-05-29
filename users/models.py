@@ -70,9 +70,10 @@ class OTPLogin(models.Model):
         return timezone.now() > self.created_at + datetime.timedelta(minutes=5)
 
 
-
 class Ticket(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="tickets")
+    user = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, related_name="tickets"
+    )
     title = models.CharField(max_length=150)
     description = models.TextField(max_length=500)
     created_at = models.DateTimeField(auto_now_add=True)

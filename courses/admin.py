@@ -2,12 +2,9 @@ from django.contrib import admin
 from .models import Course, Category, Comment, Section, Lesson, Requirement, ContactUs
 
 
-
 class CategoryInline(admin.TabularInline):
     model = Category.course.through
     extra = 1
-
-
 
 
 class LessonInline(admin.TabularInline):
@@ -15,13 +12,10 @@ class LessonInline(admin.TabularInline):
     extra = 1
 
 
-
-
-
 class RequirementInline(admin.TabularInline):
     model = Requirement
     extra = 1
-    fields = ('text',)
+    fields = ("text",)
 
 
 class SectionInline(admin.TabularInline):
@@ -29,7 +23,6 @@ class SectionInline(admin.TabularInline):
     extra = 2
 
     inlines = [LessonInline]
-
 
 
 @admin.register(Course)
@@ -53,12 +46,10 @@ class CategoryAdmin(admin.ModelAdmin):
     search_fields = ("title",)
 
 
-
 @admin.register(Comment)
 class CommentAdmin(admin.ModelAdmin):
     list_display = ("course", "author", "parent", "content", "is_approved")
     search_fields = ("course__title", "author__username")
-
 
 
 admin.site.register(ContactUs)
