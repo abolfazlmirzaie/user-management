@@ -1,5 +1,5 @@
 import datetime
-
+from django.db.models import Q
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
@@ -82,3 +82,82 @@ class Ticket(models.Model):
 
     def __str__(self):
         return self.user.username
+
+
+
+
+
+class Instructor(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="instructors")
+    bio = models.TextField(default="")
+    avatar = models.ImageField(upload_to="instructors/avatars/", blank=True, null=True)
+    expertise = models.TextField(default="")
+    is_verified = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+
+
+
+
+
+class InstructorApplication(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    motivation = models.TextField(default="")
+    status = models.CharField(
+        choices=[
+            ("pending", "pending"),
+            ("approved", "approved"),
+            ("rejected", "rejected"),
+        ],
+        default="pending",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user"],
+                condition=Q(status="pending"),
+                name="unique_pending_instructor_application"
+            )
+        ]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

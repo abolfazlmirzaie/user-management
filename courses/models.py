@@ -1,5 +1,5 @@
 from django.db import models
-from users.models import CustomUser
+from users.models import CustomUser, Instructor
 from autoslug import AutoSlugField
 from moviepy import VideoFileClip
 
@@ -8,7 +8,7 @@ class Course(models.Model):
     title = models.CharField(max_length=150)
     description = models.TextField()
     teacher = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, related_name="courses"
+        Instructor, on_delete=models.CASCADE, related_name="courses"
     )
     image = models.ImageField(upload_to="courses/image", blank=True)
     LEVEL_CHOICES = [
@@ -22,6 +22,11 @@ class Course(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     created_at = models.DateTimeField(auto_now_add=True)
     slug = AutoSlugField(max_length=150, unique=True, populate_from="title")
+
+    @property
+    def like_count(self):
+        return self.likes.count()
+
 
     def __str__(self):
         return self.title
@@ -39,42 +44,12 @@ class Section(models.Model):
 
 class Lesson(models.Model):
     section = models.ForeignKey(
-        Section, on_delete=models.CASCADE, related_name="lessons"
+        Section, on_delete=models.PROTECT, related_name="lessons"
     )
     title = models.CharField(max_length=150)
     description = models.TextField(null=True, blank=True)
-    lesson_number = models.PositiveIntegerField(default=1)
-    duration_hour = models.PositiveIntegerField(default=0)
-    duration_minute = models.PositiveIntegerField(default=0)
-    duration_second = models.PositiveIntegerField(default=0)
-    video = models.FileField(upload_to="courses/lessons/video", blank=True)
+    video_url = models.URLField()
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-
-        if self.video:
-            clip = VideoFileClip(self.video.path)
-            total_seconds = int(clip.duration)
-            clip.close()
-
-            hours = total_seconds // 3600
-            minutes = (total_seconds % 3600) // 60
-            seconds = total_seconds % 60
-
-            self.duration_hour = hours
-            self.duration_minute = minutes
-            self.duration_second = seconds
-
-            super().save(
-                update_fields=["duration_hour", "duration_minute", "duration_second"]
-            )
-
-    @property
-    def duration(self):
-        if self.duration_hour == 0:
-            return f"{self.duration_minute}:{self.duration_second:02d}"
-
-        return f"{self.duration_hour}:{self.duration_minute:02d}:{self.duration_second:02d}"
 
     def __str__(self):
         return self.title
@@ -153,3 +128,34 @@ class Enrollment(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.course.title}"
+
+
+class CourseLike(models.Model):
+    course = models.ForeignKey(
+        Course, on_delete=models.CASCADE, related_name="likes"
+    )
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="liked_course")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("course", "user")
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

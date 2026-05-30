@@ -9,7 +9,7 @@ from rest_framework.permissions import (
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Course, ContactUs, Category, Comment, Lesson, Enrollment
+from .models import Course, ContactUs, Category, Comment, Lesson, Enrollment, CourseLike
 from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView
 from .pagination import CoursePageNumberPagination
 from .serializers import (
@@ -190,3 +190,82 @@ class CourseStudentListAPIView(ListAPIView):
             return Enrollment.objects.filter(course=course)
         except Course.DoesNotExist:
             return Enrollment.objects.none()
+
+
+class ToggleLikeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, course_slug):
+        course = Course.objects.get(slug=course_slug)
+        like = CourseLike.objects.get(course=course, user=request.user)
+
+        if like:
+            like.delete()
+            like.save()
+            liked = False
+        else:
+            CourseLike.objects.create(course=course, user=request.user)
+            liked = True
+
+        return Response({
+            "liked": liked,
+            "likes_count": course.likes.count()
+        })
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

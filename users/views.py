@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
-from .models import CustomUser as User
+from .models import CustomUser as User, InstructorApplication
 from .models import SubscriptionPlan, Ticket
 from .serializers import (
     EditUserProfileSerializer,
@@ -17,11 +17,11 @@ from .serializers import (
     UserEmailLoginSerializer,
     UserLoginSerializer,
     UserRegisterSerializer,
-    TicketSerializer,
+    TicketSerializer, InstructorApplicationSerializer,
 )
 from .services.email_service import EmailService
 from .services.otp_service import OTPService
-from .services.user_service import UserService
+from .services.user_service import UserService, InstructorService
 from .throttles import LoginThrottle
 
 
@@ -263,3 +263,36 @@ class TicketListCreateView(ListCreateAPIView):
         return Response(
             data={"message": "your ticket has been created"},
         )
+
+
+class InstructurApplicationAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+    def post(self, request):
+        serializer = InstructorApplicationSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        application = InstructorService.submit_application(
+            user=request.user,
+            motivation=serializer.validated_data["motivation"],
+        )
+
+        return Response(
+            {
+                "detail": "your instructor application has been submitted",
+                "application_id": application.id,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+
+
+
+
+
+
+
+
+
+
+

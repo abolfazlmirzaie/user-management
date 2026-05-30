@@ -8,13 +8,20 @@ from .models import (
     Requirement,
     Comment,
     Lesson,
-    Enrollment,
+    Enrollment, CourseLike,
 )
 
 
 class CourseSerializer(serializers.ModelSerializer):
     total_duration = serializers.SerializerMethodField()
     teacher = serializers.CharField(source="teacher.full_name")
+    likes_count = serializers.IntegerField(source="likes.count", read_only=True)
+    is_liked = serializers.SerializerMethodField()
+
+    def get_is_liked(self, obj):
+        user = self.context["request"].user
+        return obj.likes.filter(user=user).exists()
+
 
     def get_total_duration(self, obj):
         from .services.course_service import CourseService
@@ -31,6 +38,8 @@ class CourseSerializer(serializers.ModelSerializer):
             "total_duration",
             "is_premium",
             "image",
+            'likes_count',
+            'is_liked'
         ]
 
 

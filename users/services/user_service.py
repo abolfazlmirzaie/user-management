@@ -1,7 +1,8 @@
-from django.contrib.auth import authenticate, login, logout
-
+from django.contrib.auth import authenticate
+from users.models import Instructor, InstructorApplication
+from rest_framework.exceptions import ValidationError
 from users.models import CustomUser as User
-
+from django.db import transaction
 from .email_service import EmailService
 from .otp_service import OTPService
 
@@ -35,3 +36,26 @@ class UserService:
         EmailService.send_verification_email(user.email, code)
 
         return None, "otp sent", user
+
+
+
+class InstructorService:
+    @staticmethod
+    def submit_application(*, user, motivation):
+        if Instructor.objects.filter(user=user).exists():
+            raise ValidationError(
+                {"detail": "you are already an instruct"},
+            )
+
+        if InstructorApplication.objects.filter(user=user, status="pending").exists():
+            raise ValidationError(
+                {"detail": "you already sent as application"},
+            )
+
+        with transaction.atomic():
+            application = InstructorApplication.objects.create(
+                user=user,
+                motivation=motivation,
+                status="pending",
+            )
+        return application
