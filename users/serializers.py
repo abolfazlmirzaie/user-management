@@ -10,7 +10,13 @@ from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from rest_framework import serializers
 
-from users.models import CustomUser, EmailOTP, SubscriptionPlan, Ticket, InstructorApplication
+from users.models import (
+    CustomUser,
+    EmailOTP,
+    SubscriptionPlan,
+    Ticket,
+    InstructorApplication,
+)
 
 from .validators import PasswordValidator
 
@@ -171,9 +177,8 @@ class TicketSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Ticket
-        fields = ( "title", "description")
-        read_only_fields = ( "created_at", "is_replied", "replay_content")
-
+        fields = ("title", "description")
+        read_only_fields = ("created_at", "is_replied", "replay_content")
 
 
 class InstructorApplicationSerializer(serializers.ModelSerializer):
@@ -183,5 +188,7 @@ class InstructorApplicationSerializer(serializers.ModelSerializer):
 
     def validate_motivation(self, value):
         if len(value.strip()) < 20:
-            raise serializers.ValidationError("motivation must be at least 20 characters")
+            raise serializers.ValidationError(
+                "motivation must be at least 20 characters"
+            )
         return value

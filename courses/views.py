@@ -1,4 +1,5 @@
-from django.shortcuts import redirect
+from django.db.models import Prefetch
+from django.shortcuts import redirect, get_object_or_404
 from rest_framework import status
 from rest_framework.exceptions import NotFound
 from rest_framework.permissions import (
@@ -24,6 +25,7 @@ from .serializers import (
 )
 from django.contrib.postgres.search import TrigramSimilarity
 from users.throttles import LoginThrottle
+from users.services.user_service import EnrollmentService
 
 
 class CourseListAPIView(ListAPIView):
@@ -32,7 +34,11 @@ class CourseListAPIView(ListAPIView):
     ordering_fields = ["created_at", "title", "level"]
 
     def get_queryset(self):
-        queryset = Course.objects.all().select_related("teacher")
+        queryset = (
+            Course.objects.all()
+            .select_related("instructor")
+            .prefetch_related("categories", "likes")
+        )
 
         search = self.request.query_params.get("search")
 
@@ -61,7 +67,7 @@ class CourseListAPIView(ListAPIView):
 
 class CourseDetailAPIView(RetrieveAPIView):
     serializer_class = CourseDetailSerializer
-    queryset = Course.objects.all()
+    queryset = Course.objects.all().select_related("instructor")
     lookup_field = "slug"
 
 
@@ -87,15 +93,20 @@ class CommentListAPIView(ListAPIView):
 
     def get_queryset(self):
         course_slug = self.kwargs["course_slug"]
-
         if course_slug:
-            try:
-                course = Course.objects.get(slug=course_slug)
-                return Comment.objects.filter(
-                    course=course, parent=None, is_approved=True
-                ).order_by("-created_at")
-            except Course.DoesNotExist:
-                raise NotFound("Course does not exist")
+            course = get_object_or_404(Course, slug=course_slug)
+            return (
+                Comment.objects.filter(course=course, parent=None, is_approved=True)
+                .prefetch_related(
+                    Prefetch(
+                        "replies",
+                        queryset=Comment.objects.filter(
+                            is_approved=True,
+                        ),
+                    )
+                )
+                .order_by("-created_at")
+            )
         else:
             raise NotFound("Course slug is required")
 
@@ -108,19 +119,20 @@ class CommentCreateAPIView(CreateAPIView):
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context["request"] = self.request
-
+        course = get_object_or_404(Course, slug=self.kwargs["course_slug"])
+        context["course"] = course
         parent_id = self.request.data.get("parent_id")
         if parent_id:
-            try:
-                parent_comment = Comment.objects.filter(id=parent_id)
-                context["parent_id"] = parent_comment.first().id
-
-            except Comment.DoesNotExist:
-                raise NotFound("Parent comment does not exist")
-
+            parent_comment = get_object_or_404(
+                Comment,
+                id=parent_id,
+                course=course,
+            )
+            context["parent_comment"] = parent_comment
         else:
-            context["parent_id"] = None
-            return context
+            context["parent_comment"] = None
+
+        return context
 
 
 class CourseLessonListAPIView(ListAPIView):
@@ -132,7 +144,7 @@ class CourseLessonListAPIView(ListAPIView):
         if not course_slug:
             raise NotFound("Course slug is required")
 
-        course = Course.objects.get(slug=course_slug)
+        course = get_object_or_404(Course, slug=course_slug)
 
         lessons = Lesson.objects.filter(section__course=course).order_by(
             "section__title", "title"
@@ -144,21 +156,12 @@ class EnrollCourseAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, course_slug):
-
-        try:
-            course = Course.objects.get(slug=course_slug)
-        except Course.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-        user = self.request.user
-
-        if Enrollment.objects.filter(user=user, course=course).exists():
-            return Response(status=status.HTTP_403_FORBIDDEN)
-        if course.is_premium:
-            return redirect(request.META.get("HTTP_REFERER"))
-        enrollment = Enrollment.objects.create(user=user, course=course)
-
-        return Response(status=status.HTTP_201_CREATED)
+        course = get_object_or_404(Course, slug=course_slug)
+        EnrollmentService.enroll(request.user, course)
+        return Response(
+            {"detail": "Enrolled successfully"},
+            status=status.HTTP_201_CREATED,
+        )
 
 
 class MyCourseListAPIView(ListAPIView):
@@ -180,92 +183,22 @@ class CourseStudentListAPIView(ListAPIView):
         if not course_slug:
             raise NotFound("Course slug is required")
 
-        try:
-            course = Course.objects.get(slug=course_slug)
-        except Course.DoesNotExist:
-            return Response(status=status.HTTP_404_NOT_FOUND)
-
-        try:
-            course = Course.objects.get(slug=course_slug)
-            return Enrollment.objects.filter(course=course)
-        except Course.DoesNotExist:
-            return Enrollment.objects.none()
+        course = get_object_or_404(Course, slug=course_slug)
+        return Enrollment.objects.filter(course=course)
 
 
 class ToggleLikeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, course_slug):
-        course = Course.objects.get(slug=course_slug)
-        like = CourseLike.objects.get(course=course, user=request.user)
+        course = get_object_or_404(Course, slug=course_slug)
+        like = CourseLike.objects.filter(course=course, user=request.user).first()
 
         if like:
             like.delete()
-            like.save()
             liked = False
         else:
             CourseLike.objects.create(course=course, user=request.user)
             liked = True
 
-        return Response({
-            "liked": liked,
-            "likes_count": course.likes.count()
-        })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        return Response({"liked": liked, "likes_count": course.likes.count()})

@@ -1,4 +1,7 @@
 from django.contrib.auth import authenticate
+from rest_framework.response import Response
+
+from courses.models import Enrollment
 from users.models import Instructor, InstructorApplication
 from rest_framework.exceptions import ValidationError
 from users.models import CustomUser as User
@@ -38,7 +41,6 @@ class UserService:
         return None, "otp sent", user
 
 
-
 class InstructorService:
     @staticmethod
     def submit_application(*, user, motivation):
@@ -59,3 +61,14 @@ class InstructorService:
                 status="pending",
             )
         return application
+
+
+class EnrollmentService:
+    @staticmethod
+    def enroll(user, course):
+        if Enrollment.objects.filter(user=user, course=course).exists():
+            raise ValidationError("already enrolled")
+        if course.is_premium:
+            raise ValidationError("premium course")
+
+        return Enrollment.objects.create(user=user, course=course)

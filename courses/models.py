@@ -1,13 +1,12 @@
 from django.db import models
 from users.models import CustomUser, Instructor
 from autoslug import AutoSlugField
-from moviepy import VideoFileClip
 
 
 class Course(models.Model):
     title = models.CharField(max_length=150)
     description = models.TextField()
-    teacher = models.ForeignKey(
+    instructor = models.ForeignKey(
         Instructor, on_delete=models.CASCADE, related_name="courses"
     )
     image = models.ImageField(upload_to="courses/image", blank=True)
@@ -27,7 +26,6 @@ class Course(models.Model):
     def like_count(self):
         return self.likes.count()
 
-
     def __str__(self):
         return self.title
 
@@ -44,12 +42,11 @@ class Section(models.Model):
 
 class Lesson(models.Model):
     section = models.ForeignKey(
-        Section, on_delete=models.PROTECT, related_name="lessons"
+        Section, on_delete=models.CASCADE, related_name="lessons"
     )
     title = models.CharField(max_length=150)
     description = models.TextField(null=True, blank=True)
     video_url = models.URLField()
-
 
     def __str__(self):
         return self.title
@@ -72,9 +69,6 @@ class Comment(models.Model):
     def __str__(self):
         return f"{self.author.username} - {self.course.title}"
 
-    def get_parent_comments(self):
-        return Comment.objects.filter(parent=None)
-
 
 class Requirement(models.Model):
     course = models.ForeignKey(
@@ -84,16 +78,6 @@ class Requirement(models.Model):
 
     def __str__(self):
         return self.text
-
-
-class TeacherProfile(models.Model):
-    user = models.OneToOneField(CustomUser, on_delete=models.CASCADE)
-    bio = models.TextField(blank=True)
-    avatar = models.ImageField(upload_to="teachers/", blank=True)
-    social_links = models.JSONField(default=dict, blank=True)
-
-    def __str__(self):
-        return self.user.username
 
 
 class Category(models.Model):
@@ -115,47 +99,51 @@ class ContactUs(models.Model):
 
 
 class Enrollment(models.Model):
-    user = models.OneToOneField(
+    user = models.ForeignKey(
         CustomUser, on_delete=models.CASCADE, related_name="enrollment"
     )
-    course = models.OneToOneField(
+    course = models.ForeignKey(
         Course, on_delete=models.CASCADE, related_name="students"
     )
     enrollment_date = models.DateField(auto_now_add=True)
 
     class Meta:
-        unique_together = ("user", "course")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "course"],
+                name="unique_enrollment",
+            )
+        ]
 
     def __str__(self):
         return f"{self.user.username} - {self.course.title}"
 
 
 class CourseLike(models.Model):
-    course = models.ForeignKey(
-        Course, on_delete=models.CASCADE, related_name="likes"
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="likes")
+    user = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, related_name="liked_course"
     )
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="liked_course")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ("course", "user")
 
 
+class LessonProgress(models.Model):
+    enrollment = models.ForeignKey(
+        Enrollment, on_delete=models.CASCADE, related_name="lesson_progress"
+    )
+    lesson = models.ForeignKey(
+        Lesson, on_delete=models.CASCADE, related_name="progress"
+    )
+    is_complete = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["enrollment", "lesson"],
+                name="unique_lesson_progress",
+            )
+        ]

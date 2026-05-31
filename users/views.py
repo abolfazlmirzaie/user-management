@@ -17,7 +17,8 @@ from .serializers import (
     UserEmailLoginSerializer,
     UserLoginSerializer,
     UserRegisterSerializer,
-    TicketSerializer, InstructorApplicationSerializer,
+    TicketSerializer,
+    InstructorApplicationSerializer,
 )
 from .services.email_service import EmailService
 from .services.otp_service import OTPService
@@ -267,6 +268,7 @@ class TicketListCreateView(ListCreateAPIView):
 
 class InstructurApplicationAPIView(APIView):
     permission_classes = [IsAuthenticated]
+
     def post(self, request):
         serializer = InstructorApplicationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -283,16 +285,3 @@ class InstructurApplicationAPIView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
-
-
-
-
-
-
-
-
-
-
-
-
-

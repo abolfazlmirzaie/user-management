@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("courses", "0015_course_price"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),

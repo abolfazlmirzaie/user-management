@@ -8,13 +8,14 @@ from .models import (
     Requirement,
     Comment,
     Lesson,
-    Enrollment, CourseLike,
+    Enrollment,
+    CourseLike,
 )
 
 
 class CourseSerializer(serializers.ModelSerializer):
     total_duration = serializers.SerializerMethodField()
-    teacher = serializers.CharField(source="teacher.full_name")
+    teacher = serializers.CharField(source="instructor.user.full_name")
     likes_count = serializers.IntegerField(source="likes.count", read_only=True)
     is_liked = serializers.SerializerMethodField()
 
@@ -22,24 +23,18 @@ class CourseSerializer(serializers.ModelSerializer):
         user = self.context["request"].user
         return obj.likes.filter(user=user).exists()
 
-
-    def get_total_duration(self, obj):
-        from .services.course_service import CourseService
-
-        return CourseService.get_total_duration(obj.id)
-
     class Meta:
         model = Course
         fields = [
             "id",
             "title",
-            "teacher",
+            "instructor",
             "level",
             "total_duration",
             "is_premium",
             "image",
-            'likes_count',
-            'is_liked'
+            "likes_count",
+            "is_liked",
         ]
 
 
@@ -50,28 +45,19 @@ class RequirementSerializer(serializers.ModelSerializer):
 
 
 class CourseDetailSerializer(serializers.ModelSerializer):
-    total_duration = serializers.SerializerMethodField()
     teacher = serializers.CharField(source="teacher.full_name")
-
-    # requirement = serializers.SerializerMethodField(RequirementSerializer)
-    def get_total_duration(self, obj):
-        from .services.course_service import CourseService
-
-        return CourseService.get_total_duration(obj.id)
 
     class Meta:
         model = Course
         fields = [
             "id",
             "title",
-            "teacher",
+            "instructor",
             "level",
-            "total_duration",
             "is_premium",
             "image",
             "created_at",
             "description",
-            "price",
         ]
 
 
@@ -107,32 +93,30 @@ class CategoryDetailSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    user = ReadOnlyField(source="user.username")
-    replise = serializers.SerializerMethodField()
+    author = ReadOnlyField(source="author.username")
+    replies = serializers.SerializerMethodField()
+    parent = serializers.PrimaryKeyRelatedField(
+        read_only=True,
+    )
 
     class Meta:
         model = Comment
-        fields = ["user", "course", "parent", "content", "created_at", "replise"]
+        fields = ["author", "content", "created_at", "replies", "parent"]
 
-    def get_replise(self, obj):
+    def get_replies(self, obj):
         replies = obj.replies.filter(is_approved=True)
-        serializer = CommentSerializer(replies, many=True)
+        serializer = CommentSerializer(replies, many=True, context=self.context)
         return serializer.data
 
     def create(self, validated_data):
-        request = self.context.get("request")
-        if not request:
-            raise serializers.ValidationError("request context is missing")
+        request = self.context["request"]
 
-        parent_id = self.context.get("parent_id")
+        parent_comment = self.context.get("parent_comment")
+        course = self.context["course"]
 
-        comment = Comment.objects.create(
-            user=request.user,
-            parent=parent_id,
-            content=validated_data[self.context.get("content")],
-            **validated_data,
+        return Comment.objects.create(
+            author=request.user, parent=parent_comment, course=course, **validated_data
         )
-        return comment
 
 
 class LessonSerializer(serializers.ModelSerializer):

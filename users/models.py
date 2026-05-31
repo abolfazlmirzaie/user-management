@@ -84,22 +84,16 @@ class Ticket(models.Model):
         return self.user.username
 
 
-
-
-
 class Instructor(models.Model):
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name="instructors")
+    user = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, related_name="instructors"
+    )
     bio = models.TextField(default="")
     avatar = models.ImageField(upload_to="instructors/avatars/", blank=True, null=True)
     expertise = models.TextField(default="")
     is_verified = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
-
-
-
-
 
 
 class InstructorApplication(models.Model):
@@ -116,48 +110,11 @@ class InstructorApplication(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-
     class Meta:
         constraints = [
             models.UniqueConstraint(
                 fields=["user"],
                 condition=Q(status="pending"),
-                name="unique_pending_instructor_application"
+                name="unique_pending_instructor_application",
             )
         ]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
