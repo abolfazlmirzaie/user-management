@@ -180,9 +180,14 @@ class EmailLoginView(APIView):
         code = OTPService.generate_otp(user.email)
         EmailService.send_verification_email(email, code)
 
-        request.session["pending_user_id"] = user.id
+        PendingLogin.objects.filter(user=user).delete()
+        pending_login = PendingLogin.objects.create(user=user)
         return Response(
-            {"message": "your code has been sent"}, status=status.HTTP_200_OK
+            {
+                "message": "otp sent",
+                "pending_token": str(pending_login.token),
+            },
+            status=status.HTTP_200_OK,
         )
 
 
@@ -193,25 +198,28 @@ class VerifyOTPEmailLoginView(APIView):
         serializer = OTPVerifyLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        user_id = request.session.get("pending_user_id")
-        if not user_id:
-            return Response(
-                {"message": "no pending login"}, status=status.HTTP_400_BAD_REQUEST
-            )
 
-        code = serializer.validated_data["code"]
-        user = get_object_or_404(User, id=user_id)
+        pending_login = get_object_or_404(PendingLogin, pending_token=serializer.validated_data["pending_token"])
 
-        ok, msg = OTPService.verify_otp(user.email, code)
+        user = pending_login.user
+
+        otp = serializer.validated_data["otp"]
+
+
+        ok, msg = OTPService.verify_otp(user.email, otp)
 
         if not ok:
             return Response({"message": msg}, status=status.HTTP_400_BAD_REQUEST)
 
         OTPService.delete_otp(user.email)
-        login(request, user)
-        del request.session["pending_user_id"]
-
-        return Response({"message": "you are logged in"}, status=status.HTTP_200_OK)
+        refresh = RefreshToken.for_user(user)
+        return Response(
+            {
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class EditProfileView(RetrieveUpdateAPIView):

@@ -8,13 +8,12 @@ from .views import (
     PasswordResetRequestView,
     PlanListView,
     UserLoginView,
-    UserLogoutView,
     UserRegisterView,
     VerifyCodeView,
     VerifyOTPEmailLoginView,
     VerifyOTPLoginView,
     VerifyUserEmailView,
-    TicketListCreateView,
+    TicketListCreateView, InstructorApplicationAPIView,
 )
 
 urlpatterns = [
@@ -31,6 +30,7 @@ urlpatterns = [
         name="verify-email",
     ),
     path("login/", UserLoginView.as_view(), name="login"),
+    path("instructor/application/", InstructorApplicationAPIView.as_view(), name="instructor_application"),
     path("tickets/", TicketListCreateView.as_view(), name="ticket"),
     path("verify/login/", VerifyOTPLoginView.as_view(), name="verify_login"),
     path("plans/", PlanListView.as_view(), name="subscription_plan_list"),
