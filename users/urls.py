@@ -34,7 +34,6 @@ urlpatterns = [
     path("tickets/", TicketListCreateView.as_view(), name="ticket"),
     path("verify/login/", VerifyOTPLoginView.as_view(), name="verify_login"),
     path("plans/", PlanListView.as_view(), name="subscription_plan_list"),
-    path("logout/", UserLogoutView.as_view(), name="logout"),
     path("otp/verify/", VerifyCodeView.as_view(), name="otp-verify"),
     path("email/login/", EmailLoginView.as_view(), name="email-login"),
     path(

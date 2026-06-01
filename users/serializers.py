@@ -76,14 +76,6 @@ class UserLoginSerializer(serializers.Serializer):
     username = serializers.CharField(required=True)
     password = serializers.CharField(required=True, write_only=True)
 
-    def validate(self, data):
-        user = authenticate(username=data["username"], password=data["password"])
-        if not user:
-            raise serializers.ValidationError("Invalid credentials")
-
-        data["user"] = user
-        return data
-
 
 class UserEmailLoginSerializer(serializers.Serializer):
     email = serializers.CharField(required=True)
@@ -99,7 +91,8 @@ class UserEmailLoginSerializer(serializers.Serializer):
 
 
 class OTPVerifyLoginSerializer(serializers.Serializer):
-    code = serializers.CharField(max_length=6)
+    otp = serializers.CharField(max_length=6)
+    pending_token = serializers.UUIDField()
 
 
 class EditUserProfileSerializer(serializers.ModelSerializer):

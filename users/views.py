@@ -1,12 +1,14 @@
 from django.contrib.auth import login, logout
+from django.shortcuts import get_object_or_404
 from rest_framework import permissions, status
 from rest_framework.generics import RetrieveUpdateAPIView, ListCreateAPIView
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import CustomUser as User, InstructorApplication
+from .models import CustomUser as User, InstructorApplication, PendingLogin
 from .models import SubscriptionPlan, Ticket
 from .serializers import (
     EditUserProfileSerializer,
@@ -69,7 +71,7 @@ class VerifyCodeView(APIView):
             return Response({"message": msg}, status=status.HTTP_400_BAD_REQUEST)
         request.user.is_verified = True
         OTPService.delete_otp(email)
-        request.user.save()
+        request.user.save(update_fields=["is_verified"])
         return Response("your email has been verified !", status=status.HTTP_200_OK)
 
 
@@ -90,60 +92,80 @@ class UserLoginView(APIView):
     throttle_classes = [LoginThrottle]
 
     def post(self, request, *args, **kwargs):
-        serializer = UserLoginSerializer(data=request.data)
         if request.user.is_authenticated:
             return Response(
                 {"message": "you are already logged in"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        if serializer.is_valid():
-            user = serializer.validated_data["user"]
-            ok, msg, user = UserService.login(user.username, request.data["password"])
+        serializer = UserLoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-            if ok:
-                login(request, user)
-                return Response({"message": msg}, status=status.HTTP_200_OK)
-            if ok is None:
-                request.session["pending_user_id"] = user.id
-                return Response({"message": "otp sent"}, status=status.HTTP_200_OK)
-        return Response({"message": "error"}, status=status.HTTP_400_BAD_REQUEST)
+        user = serializer.validated_data["user"]
+
+        ok, msg, user = UserService.login(user.username, request.data["password"])
+        if ok:
+            refresh = RefreshToken.for_user(user)
+
+            return Response(
+                {
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh),
+                },
+                status=status.HTTP_200_OK,
+            )
+        if ok is None:
+            PendingLogin.objects.filter(user=user).delete()
+            pending_login = PendingLogin.objects.create(user=user)
+            return Response(
+                {
+                    "message": "otp sent",
+                    "pending_token": str(pending_login.token),
+                },
+                status=status.HTTP_200_OK,
+            )
+        return Response(
+            {"message": msg},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
 
 class VerifyOTPLoginView(APIView):
     throttle_classes = [LoginThrottle]
 
     def post(self, request, *args, **kwargs):
-        serializer = OTPSerializer(data=request.data)
+
+        serializer = OTPVerifyLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        user_id = request.session.get("pending_user_id")
-        if not user_id:
+        pending_login = get_object_or_404(
+            PendingLogin,
+            token=serializer.validated_data["pending_token"],
+        )
+
+        user = pending_login.user
+        otp = serializer.validated_data["otp"]
+
+        ok, msg = OTPService.verify_otp(user.email, otp)
+
+        if not ok:
             return Response(
-                {"message": "no pending login"}, status=status.HTTP_400_BAD_REQUEST
+                {"message": msg},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        user = User.objects.get(id=user_id)
-        code = serializer.validated_data["otp"]
-
-        ok, msg = OTPService.verify_otp(user.email, code)
-        if not ok:
-            return Response({"message": msg}, status=status.HTTP_400_BAD_REQUEST)
-
-        login(request, user)
-        del request.session["pending_user_id"]
         OTPService.delete_otp(user.email)
-        return Response({"message": "you are logged in"}, status=status.HTTP_200_OK)
 
+        refresh = RefreshToken.for_user(user)
 
-class UserLogoutView(APIView):
-    throttle_classes = [LoginThrottle]
-    permission_classes = [IsAuthenticated]
+        pending_login.delete()
 
-    def post(self, request, *args, **kwargs):
-
-        logout(request)
-
-        return Response({"message": "you are logged out"}, status=status.HTTP_200_OK)
+        return Response(
+            {
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 class EmailLoginView(APIView):
@@ -153,7 +175,7 @@ class EmailLoginView(APIView):
         serializer = UserEmailLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data["email"]
-        user = User.objects.get(email=email)
+        user = get_object_or_404(User, email=email)
 
         code = OTPService.generate_otp(user.email)
         EmailService.send_verification_email(email, code)
@@ -178,7 +200,7 @@ class VerifyOTPEmailLoginView(APIView):
             )
 
         code = serializer.validated_data["code"]
-        user = User.objects.get(id=user_id)
+        user = get_object_or_404(User, id=user_id)
 
         ok, msg = OTPService.verify_otp(user.email, code)
 
@@ -203,7 +225,6 @@ class EditProfileView(RetrieveUpdateAPIView):
 
 class PasswordResetRequestView(APIView):
     throttle_classes = [LoginThrottle]
-    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         serializer = PasswordResetRequestSerializer(data=request.data)
@@ -259,14 +280,13 @@ class TicketListCreateView(ListCreateAPIView):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-        if serializer.is_valid():
-            serializer.save()
+        serializer.is_valid()
         return Response(
             data={"message": "your ticket has been created"},
         )
 
 
-class InstructurApplicationAPIView(APIView):
+class InstructorApplicationAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):

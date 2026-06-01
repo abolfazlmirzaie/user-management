@@ -3,6 +3,7 @@ from django.db.models import Q
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
+import uuid
 
 
 class CustomUser(AbstractUser):
@@ -68,6 +69,25 @@ class OTPLogin(models.Model):
 
     def is_expired(self):
         return timezone.now() > self.created_at + datetime.timedelta(minutes=5)
+
+
+class PendingLogin(models.Model):
+    token = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        editable=False,
+    )
+
+    user = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        related_name="pending_logins",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.email} - {self.token}"
 
 
 class Ticket(models.Model):

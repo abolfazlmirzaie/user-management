@@ -12,8 +12,6 @@ class OTPService:
 
     @staticmethod
     def verify_otp(email, code):
-        otp = EmailOTP.objects.get(email=email)
-
         try:
             otp = EmailOTP.objects.get(email=email)
         except EmailOTP.DoesNotExist:
@@ -29,4 +27,4 @@ class OTPService:
 
     @staticmethod
     def delete_otp(email):
-        otp = EmailOTP.objects.get(email=email).delete()
+        otp = EmailOTP.objects.filter(email=email).delete()

@@ -33,7 +33,7 @@ class UserService:
         if not user:
             return False, "invalid username or password", None
         if not user.is_verified:
-            return None, "you are logged in", user
+            return False, "your email is not verified", None
 
         code = OTPService.generate_otp(user.email)
         EmailService.send_verification_email(user.email, code)
