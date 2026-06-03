@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django.db.models import Prefetch
 from django.shortcuts import redirect, get_object_or_404
 from rest_framework import status
@@ -19,6 +20,7 @@ from .models import (
     Enrollment,
     CourseLike,
     Section,
+    LessonProgress,
 )
 from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView
 from .pagination import CoursePageNumberPagination
@@ -31,10 +33,12 @@ from .serializers import (
     CommentSerializer,
     LessonSerializer,
     EnrollmentSerializer,
+    CourseProgressSerializer,
 )
 from django.contrib.postgres.search import TrigramSimilarity
 from users.throttles import LoginThrottle
 from users.services.user_service import EnrollmentService
+from .services.course_service import ProgressService
 
 
 class CourseListAPIView(ListAPIView):
@@ -197,3 +201,37 @@ class ToggleLikeView(APIView):
             liked = True
 
         return Response({"liked": liked, "likes_count": course.likes.count()})
+
+
+class CompleteLessonAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, lesson_id):
+        lesson = get_object_or_404(Lesson, id=lesson_id)
+        user = self.request.user
+
+        ok, msg = ProgressService.complete_lessons(lesson, user)
+
+        if not ok:
+            return Response({"detail": msg}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({"detail": msg}, status=status.HTTP_200_OK)
+
+
+class CourseProgressAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, course_slug):
+
+        course = get_object_or_404(Course, slug=course_slug)
+
+        result = ProgressService.course_progress(course=course, user=request.user)
+
+        if not result["ok"]:
+            return Response(
+                {"detail": result["message"]}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        serializer = CourseProgressSerializer(result["data"])
+
+        return Response(serializer.data)

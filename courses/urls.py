@@ -11,6 +11,8 @@ from courses.views import (
     MyCourseListAPIView,
     CourseStudentListAPIView,
     EnrollCourseAPIView,
+    CompleteLessonAPIView,
+    CourseProgressAPIView,
 )
 
 urlpatterns = [
@@ -18,6 +20,8 @@ urlpatterns = [
     path("contactus/", ContactUsAPIView.as_view()),
     path("categories/", CategoryListAPIView.as_view()),
     path("courses/<slug:slug>/", CourseDetailAPIView.as_view()),
+    path("course/<slug:course_slug>/progress/", CourseProgressAPIView.as_view()),
+    path("lesson/<int:lesson_id>/mark-complete/", CompleteLessonAPIView.as_view()),
     path("categories/<slug:slug>/", CategoryDetailAPIView.as_view()),
     path("courses/<slug:course_slug>/comments/", CommentListAPIView.as_view()),
     path("courses/<slug:course_slug>/comments/create/", CommentCreateAPIView.as_view()),

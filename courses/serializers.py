@@ -139,3 +139,9 @@ class EnrollmentSerializer(serializers.ModelSerializer):
         model = Enrollment
         fields = ["user", "course"]
         read_only_fields = ["user", "course"]
+
+
+class CourseProgressSerializer(serializers.ModelSerializer):
+    total_lessons = serializers.IntegerField()
+    completed_lessons = serializers.IntegerField()
+    progress_percentage = serializers.IntegerField()

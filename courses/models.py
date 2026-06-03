@@ -140,13 +140,13 @@ class CourseLike(models.Model):
 
 class LessonProgress(models.Model):
     enrollment = models.ForeignKey(
-        Enrollment, on_delete=models.CASCADE, related_name="lesson_progress"
+        Enrollment, on_delete=models.CASCADE, related_name="lesson_progresses"
     )
     lesson = models.ForeignKey(
-        Lesson, on_delete=models.CASCADE, related_name="progress"
+        Lesson, on_delete=models.CASCADE, related_name="progresses"
     )
     is_complete = models.BooleanField(default=False)
-    completed_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         constraints = [
