@@ -8,7 +8,6 @@ from courses.views import (
     CategoryDetailAPIView,
     CommentListAPIView,
     CommentCreateAPIView,
-    CourseLessonListAPIView,
     MyCourseListAPIView,
     CourseStudentListAPIView,
     EnrollCourseAPIView,
@@ -16,7 +15,6 @@ from courses.views import (
 
 urlpatterns = [
     path("courses/", CourseListAPIView.as_view()),
-    path("courses/<str:course_slug>/lessons", CourseLessonListAPIView.as_view()),
     path("contactus/", ContactUsAPIView.as_view()),
     path("categories/", CategoryListAPIView.as_view()),
     path("courses/<slug:slug>/", CourseDetailAPIView.as_view()),

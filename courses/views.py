@@ -1,7 +1,7 @@
 from django.db.models import Prefetch
 from django.shortcuts import redirect, get_object_or_404
 from rest_framework import status
-from rest_framework.exceptions import NotFound
+from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.permissions import (
     IsAuthenticatedOrReadOnly,
     IsAuthenticated,
@@ -10,7 +10,16 @@ from rest_framework.permissions import (
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Course, ContactUs, Category, Comment, Lesson, Enrollment, CourseLike
+from .models import (
+    Course,
+    ContactUs,
+    Category,
+    Comment,
+    Lesson,
+    Enrollment,
+    CourseLike,
+    Section,
+)
 from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView
 from .pagination import CoursePageNumberPagination
 from .serializers import (
@@ -67,8 +76,11 @@ class CourseListAPIView(ListAPIView):
 
 class CourseDetailAPIView(RetrieveAPIView):
     serializer_class = CourseDetailSerializer
-    queryset = Course.objects.all().select_related("instructor")
-    lookup_field = "slug"
+    queryset = Course.objects.select_related("instructor").prefetch_related(
+        Prefetch("sections", queryset=Section.objects.prefetch_related("lessons")),
+        "categories",
+        "likes",
+    )
 
 
 class ContactUsAPIView(ListAPIView):
@@ -133,23 +145,6 @@ class CommentCreateAPIView(CreateAPIView):
             context["parent_comment"] = None
 
         return context
-
-
-class CourseLessonListAPIView(ListAPIView):
-    serializer_class = LessonSerializer
-
-    def get_queryset(self):
-        course_slug = self.kwargs["course_slug"]
-
-        if not course_slug:
-            raise NotFound("Course slug is required")
-
-        course = get_object_or_404(Course, slug=course_slug)
-
-        lessons = Lesson.objects.filter(section__course=course).order_by(
-            "section__title", "title"
-        )
-        return lessons
 
 
 class EnrollCourseAPIView(APIView):

@@ -198,13 +198,13 @@ class VerifyOTPEmailLoginView(APIView):
         serializer = OTPVerifyLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-
-        pending_login = get_object_or_404(PendingLogin, pending_token=serializer.validated_data["pending_token"])
+        pending_login = get_object_or_404(
+            PendingLogin, pending_token=serializer.validated_data["pending_token"]
+        )
 
         user = pending_login.user
 
         otp = serializer.validated_data["otp"]
-
 
         ok, msg = OTPService.verify_otp(user.email, otp)
 

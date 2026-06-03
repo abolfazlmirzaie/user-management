@@ -10,14 +10,29 @@ from .models import (
     Lesson,
     Enrollment,
     CourseLike,
+    Section,
 )
 
 
+class LessonSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Lesson
+        fields = ["id", "title", "description", "video_url"]
+
+
+class SectionSerializer(serializers.ModelSerializer):
+    lessons = LessonSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Section
+        fields = ["id", "title", "lessons"]
+
+
 class CourseSerializer(serializers.ModelSerializer):
-    total_duration = serializers.SerializerMethodField()
     teacher = serializers.CharField(source="instructor.user.full_name")
     likes_count = serializers.IntegerField(source="likes.count", read_only=True)
     is_liked = serializers.SerializerMethodField()
+    sections = SectionSerializer(many=True, read_only=True)
 
     def get_is_liked(self, obj):
         user = self.context["request"].user
@@ -30,7 +45,7 @@ class CourseSerializer(serializers.ModelSerializer):
             "title",
             "instructor",
             "level",
-            "total_duration",
+            "sections",
             "is_premium",
             "image",
             "likes_count",
@@ -117,12 +132,6 @@ class CommentSerializer(serializers.ModelSerializer):
         return Comment.objects.create(
             author=request.user, parent=parent_comment, course=course, **validated_data
         )
-
-
-class LessonSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Lesson
-        fields = ["id", "title", "description", "lesson_number", "duration", "video"]
 
 
 class EnrollmentSerializer(serializers.ModelSerializer):

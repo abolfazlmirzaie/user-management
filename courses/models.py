@@ -35,6 +35,10 @@ class Section(models.Model):
         Course, on_delete=models.CASCADE, related_name="sections"
     )
     title = models.CharField(max_length=150)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ("order",)
 
     def __str__(self):
         return f"{self.course.title} - {self.title}"
@@ -47,6 +51,10 @@ class Lesson(models.Model):
     title = models.CharField(max_length=150)
     description = models.TextField(null=True, blank=True)
     video_url = models.URLField()
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ("order",)
 
     def __str__(self):
         return self.title
