@@ -61,6 +61,8 @@ class RequirementSerializer(serializers.ModelSerializer):
 
 class CourseDetailSerializer(serializers.ModelSerializer):
     teacher = serializers.CharField(source="teacher.full_name")
+    rating_count = serializers.IntegerField(read_only=True)
+    average_rating = serializers.FloatField(read_only=True)
 
     class Meta:
         model = Course
@@ -68,6 +70,8 @@ class CourseDetailSerializer(serializers.ModelSerializer):
             "id",
             "title",
             "instructor",
+            "rating_count",
+            "average_rating",
             "level",
             "is_premium",
             "image",
@@ -145,3 +149,7 @@ class CourseProgressSerializer(serializers.ModelSerializer):
     total_lessons = serializers.IntegerField()
     completed_lessons = serializers.IntegerField()
     progress_percentage = serializers.IntegerField()
+
+
+class SubmitRatingSerializer(serializers.Serializer):
+    rating = serializers.IntegerField(min_value=1, max_value=5)

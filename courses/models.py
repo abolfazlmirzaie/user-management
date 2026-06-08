@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models import UniqueConstraint
+
 from users.models import CustomUser, Instructor
 from autoslug import AutoSlugField
 
@@ -153,5 +155,22 @@ class LessonProgress(models.Model):
             models.UniqueConstraint(
                 fields=["enrollment", "lesson"],
                 name="unique_lesson_progress",
+            )
+        ]
+
+
+class CourseRating(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="ratings")
+    user = models.ForeignKey(
+        CustomUser, on_delete=models.CASCADE, related_name="ratings"
+    )
+    rating = models.PositiveSmallIntegerField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            UniqueConstraint(
+                fields=["course", "user"],
+                name="unique_course_rating",
             )
         ]

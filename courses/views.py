@@ -1,5 +1,6 @@
+from django.db.models.functions import Coalesce
 from django.utils import timezone
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Avg, Count, Value
 from django.shortcuts import redirect, get_object_or_404
 from rest_framework import status
 from rest_framework.exceptions import NotFound, PermissionDenied
@@ -34,11 +35,12 @@ from .serializers import (
     LessonSerializer,
     EnrollmentSerializer,
     CourseProgressSerializer,
+    SubmitRatingSerializer,
 )
 from django.contrib.postgres.search import TrigramSimilarity
 from users.throttles import LoginThrottle
 from users.services.user_service import EnrollmentService
-from .services.course_service import ProgressService
+from .services.course_service import ProgressService, CourseService
 
 
 class CourseListAPIView(ListAPIView):
@@ -80,10 +82,20 @@ class CourseListAPIView(ListAPIView):
 
 class CourseDetailAPIView(RetrieveAPIView):
     serializer_class = CourseDetailSerializer
-    queryset = Course.objects.select_related("instructor").prefetch_related(
-        Prefetch("sections", queryset=Section.objects.prefetch_related("lessons")),
-        "categories",
-        "likes",
+    queryset = (
+        Course.objects.select_related("instructor")
+        .prefetch_related(
+            Prefetch("sections", queryset=Section.objects.prefetch_related("lessons")),
+            "categories",
+            "likes",
+        )
+        .annotate(
+            average_rating=Coalesce(
+                Avg("ratings__rating"),
+                Value(0.0),
+            ),
+            rating_count=Count("ratings"),
+        )
     )
 
 
@@ -235,3 +247,20 @@ class CourseProgressAPIView(APIView):
         serializer = CourseProgressSerializer(result["data"])
 
         return Response(serializer.data)
+
+
+class SubmitRatingAPIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, course_slug):
+        course = get_object_or_404(Course, slug=course_slug)
+        user = self.request.user
+        serializer = SubmitRatingSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        rating = serializer.validated_data["rating"]
+        ok, msg = CourseService.submit_rating_for_course(
+            course=course, user=user, rating=rating
+        )
+        if not ok:
+            return Response({"detail": msg}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({"detail": msg}, status=status.HTTP_200_OK)

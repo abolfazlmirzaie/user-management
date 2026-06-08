@@ -1,7 +1,21 @@
 from rest_framework import status
 from rest_framework.response import Response
 from django.utils import timezone
-from courses.models import Enrollment, LessonProgress, Lesson
+from courses.models import Enrollment, LessonProgress, Lesson, CourseRating
+
+
+class CourseService:
+    @staticmethod
+    def submit_rating_for_course(user, course, rating):
+        enrollment = Enrollment.objects.filter(user=user, course=course).exists()
+        if not enrollment:
+            return False, "you must be enrolled"
+
+        CourseRating.objects.update_or_create(
+            user=user, course=course, defaults={"rating": rating}
+        )
+
+        return True, "success"
 
 
 class ProgressService:

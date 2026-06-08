@@ -27,9 +27,9 @@ class SectionInline(admin.TabularInline):
 
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
-    list_display = ("title", "teacher", "level", "is_premium")
+    list_display = ("title", "instructor", "level", "is_premium")
     list_filter = ("level", "is_premium")
-    search_fields = ("title", "teacher__first_name", "teacher__last_name")
+    search_fields = ("title", "instructor__user__full_name")
     inlines = [CategoryInline, RequirementInline, SectionInline]
 
 
