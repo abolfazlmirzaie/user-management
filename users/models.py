@@ -11,9 +11,6 @@ class CustomUser(AbstractUser):
     email = models.EmailField(unique=True, blank=True, null=True)
     is_verified = models.BooleanField(default=False)
     two_factor_enabled = models.BooleanField(default=False)
-    profile_picture = models.ImageField(
-        upload_to="profile_pictures", default="profile_pic/profile.png"
-    )
 
     def __str__(self):
         return self.username
@@ -105,8 +102,8 @@ class Ticket(models.Model):
 
 
 class Instructor(models.Model):
-    user = models.ForeignKey(
-        CustomUser, on_delete=models.CASCADE, related_name="instructors"
+    user = models.OneToOneField(
+        CustomUser, on_delete=models.CASCADE, related_name="instructor"
     )
     bio = models.TextField(default="")
     avatar = models.ImageField(upload_to="instructors/avatars/", blank=True, null=True)

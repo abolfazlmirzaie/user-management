@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import UniqueConstraint
+from django.db.models import UniqueConstraint, Max
 
 from users.models import CustomUser, Instructor
 from autoslug import AutoSlugField
@@ -20,7 +20,6 @@ class Course(models.Model):
 
     level = models.CharField(max_length=20, choices=LEVEL_CHOICES, default="beginner")
     is_premium = models.BooleanField(default=False)
-    price = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     created_at = models.DateTimeField(auto_now_add=True)
     slug = AutoSlugField(max_length=150, unique=True, populate_from="title")
 
@@ -41,6 +40,17 @@ class Section(models.Model):
 
     class Meta:
         ordering = ("order",)
+
+    def save(self, *args, **kwargs):
+        if self._state.adding:
+            last_order = (
+                Section.objects.filter(course=self.course).aggregate(Max("order"))[
+                    "order__max"
+                ]
+                or 0
+            )
+            self.order = last_order + 1
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.course.title} - {self.title}"
@@ -137,7 +147,12 @@ class CourseLike(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ("course", "user")
+        constraints = [
+            models.UniqueConstraint(
+                fields=["course", "user"],
+                name="unique_course_like",
+            )
+        ]
 
 
 class LessonProgress(models.Model):

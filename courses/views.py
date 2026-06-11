@@ -1,9 +1,9 @@
 from django.db.models.functions import Coalesce
-from django.utils import timezone
+from .permissions import IsInstructor, IsCourseInstructor
 from django.db.models import Prefetch, Avg, Count, Value
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.exceptions import NotFound, PermissionDenied
+from rest_framework.exceptions import NotFound
 from rest_framework.permissions import (
     IsAuthenticatedOrReadOnly,
     IsAuthenticated,
@@ -21,9 +21,14 @@ from .models import (
     Enrollment,
     CourseLike,
     Section,
-    LessonProgress,
 )
-from rest_framework.generics import ListAPIView, RetrieveAPIView, CreateAPIView
+from rest_framework.generics import (
+    ListAPIView,
+    RetrieveAPIView,
+    CreateAPIView,
+    ListCreateAPIView,
+    RetrieveUpdateDestroyAPIView,
+)
 from .pagination import CoursePageNumberPagination
 from .serializers import (
     CourseSerializer,
@@ -32,15 +37,20 @@ from .serializers import (
     CategorySerializer,
     CategoryDetailSerializer,
     CommentSerializer,
-    LessonSerializer,
     EnrollmentSerializer,
     CourseProgressSerializer,
     SubmitRatingSerializer,
+    InstructorInfoSerializer,
+    InstructorSerializer,
+    SectionSerializer,
+    SectionListCreateUpdateSerializer,
+    CourseCreateSerializer,
 )
 from django.contrib.postgres.search import TrigramSimilarity
 from users.throttles import LoginThrottle
 from users.services.user_service import EnrollmentService
 from .services.course_service import ProgressService, CourseService
+from users.models import Instructor
 
 
 class CourseListAPIView(ListAPIView):
@@ -218,7 +228,7 @@ class ToggleLikeView(APIView):
 class CompleteLessonAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, lesson_id):
+    def post(self, lesson_id):
         lesson = get_object_or_404(Lesson, id=lesson_id)
         user = self.request.user
 
@@ -264,3 +274,55 @@ class SubmitRatingAPIView(APIView):
         if not ok:
             return Response({"detail": msg}, status=status.HTTP_400_BAD_REQUEST)
         return Response({"detail": msg}, status=status.HTTP_200_OK)
+
+
+class InstructorListAPIView(ListAPIView):
+    queryset = Instructor.objects.all()
+    serializer_class = InstructorSerializer
+
+
+class InstructorInfo(RetrieveAPIView):
+    serializer_class = InstructorInfoSerializer
+    lookup_field = "s"
+
+    def get_queryset(self):
+        return Instructor.objects.select_related("user").prefetch_related(
+            "courses",
+            "courses__students",
+        )
+
+
+# for instructor only
+class CourseListCreateAPIView(ListCreateAPIView):
+    permission_classes = [IsAuthenticated, IsInstructor]
+    serializer_class = CourseCreateSerializer
+
+    def get_queryset(self):
+        instructor = self.request.user
+        return Course.objects.all().filter(instructor__user=instructor)
+
+    def perform_create(self, serializer):
+        instructor = self.request.user.instructor
+        serializer.save(instructor=instructor)
+
+
+# for instructor only
+class SectionListCreateAPIView(ListCreateAPIView):
+    permission_classes = [IsAuthenticated, IsInstructor, IsCourseInstructor]
+    serializer_class = SectionListCreateUpdateSerializer
+
+    def get_queryset(self):
+        return Section.objects.filter(courseــslug=self.kwargs["course_slug"])
+
+    def perform_create(self, serializer):
+        course = get_object_or_404(Course, slug=self.kwargs["course_slug"])
+        serializer.save(course=course)
+
+
+class SectionDetailAPIView(RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated, IsInstructor]
+    serializer_class = SectionListCreateUpdateSerializer
+    lookup_field = "id"
+
+    def get_queryset(self):
+        return Section.objects.filter(course__instructor__user=self.request.user)

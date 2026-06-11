@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from rest_framework.fields import ReadOnlyField
-
+from users.models import Instructor
 from .models import (
     Course,
     ContactUs,
@@ -9,9 +9,9 @@ from .models import (
     Comment,
     Lesson,
     Enrollment,
-    CourseLike,
     Section,
 )
+from django.db.models import Count
 
 
 class LessonSerializer(serializers.ModelSerializer):
@@ -20,6 +20,7 @@ class LessonSerializer(serializers.ModelSerializer):
         fields = ["id", "title", "description", "video_url"]
 
 
+# for normal users
 class SectionSerializer(serializers.ModelSerializer):
     lessons = LessonSerializer(many=True, read_only=True)
 
@@ -29,9 +30,9 @@ class SectionSerializer(serializers.ModelSerializer):
 
 
 class CourseSerializer(serializers.ModelSerializer):
-    teacher = serializers.CharField(source="instructor.user.full_name")
+    teacher = serializers.CharField(source="instructor.user.full_name", read_only=True)
     likes_count = serializers.IntegerField(source="likes.count", read_only=True)
-    is_liked = serializers.SerializerMethodField()
+    is_liked = serializers.SerializerMethodField(default=False)
     sections = SectionSerializer(many=True, read_only=True)
 
     def get_is_liked(self, obj):
@@ -153,3 +154,54 @@ class CourseProgressSerializer(serializers.ModelSerializer):
 
 class SubmitRatingSerializer(serializers.Serializer):
     rating = serializers.IntegerField(min_value=1, max_value=5)
+
+
+class InstructorSerializer(serializers.ModelSerializer):
+    full_name = serializers.CharField(source="user.full_name")
+
+    class Meta:
+        model = Instructor
+        fields = ["full_name", "avatar", "expertise"]
+
+
+class InstructorInfoSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(source="user.email")
+    full_name = serializers.CharField(source="user.full_name")
+    courses = CourseSerializer(many=True, read_only=True)
+    students_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Instructor
+        fields = [
+            "full_name",
+            "email",
+            "bio",
+            "avatar",
+            "expertise",
+            "courses",
+            "students_count",
+        ]
+
+    def get_students_count(self, obj):
+        return (
+            Enrollment.objects.filter(
+                course__instructor=obj,
+            )
+            .values("user")
+            .distinct()
+            .count()
+        )
+
+
+class CourseCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Course
+        fields = ["title", "description", "image", "level", "is_premium"]
+
+
+# for instructor
+class SectionListCreateUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Section
+        fields = ["title"]
+        read_only_fields = ["id"]
