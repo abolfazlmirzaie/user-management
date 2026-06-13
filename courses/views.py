@@ -56,7 +56,7 @@ from users.models import Instructor
 
 
 class CourseListAPIView(ListAPIView):
-    serializer_class = CourseSerializerzz
+    serializer_class = CourseSerializer
     pagination_class = CoursePageNumberPagination
     ordering_fields = ["created_at", "title", "level"]
 
