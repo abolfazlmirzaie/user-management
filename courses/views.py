@@ -45,6 +45,8 @@ from .serializers import (
     SectionSerializer,
     SectionListCreateUpdateSerializer,
     CourseCreateSerializer,
+    LessonUpdateSerializer,
+    LessonListCreateSerializer,
 )
 from django.contrib.postgres.search import TrigramSimilarity
 from users.throttles import LoginThrottle
@@ -54,7 +56,7 @@ from users.models import Instructor
 
 
 class CourseListAPIView(ListAPIView):
-    serializer_class = CourseSerializer
+    serializer_class = CourseSerializerzz
     pagination_class = CoursePageNumberPagination
     ordering_fields = ["created_at", "title", "level"]
 
@@ -319,6 +321,7 @@ class SectionListCreateAPIView(ListCreateAPIView):
         serializer.save(course=course)
 
 
+# for instructor only
 class SectionDetailAPIView(RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated, IsInstructor]
     serializer_class = SectionListCreateUpdateSerializer
@@ -326,3 +329,35 @@ class SectionDetailAPIView(RetrieveUpdateDestroyAPIView):
 
     def get_queryset(self):
         return Section.objects.filter(course__instructor__user=self.request.user)
+
+
+# for instructor only
+class LessonListCreateAPIView(ListCreateAPIView):
+    permission_classes = [IsAuthenticated, IsInstructor]
+    serializer_class = LessonListCreateSerializer
+
+    def get_queryset(self):
+        return Lesson.objects.filter(
+            section__id=self.kwargs["section_id"],
+            section__course__instructor__user=self.request.user,
+        )
+
+    def perform_create(self, serializer):
+        section = get_object_or_404(
+            Section,
+            id=self.kwargs["section_id"],
+            section__course__instructor__user=self.request.user,
+        )
+        serializer.save(section=section)
+
+
+# for instructor only
+class LessonUpdateAPIView(RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticated, IsInstructor]
+    serializer_class = LessonUpdateSerializer
+    lookup_field = "id"
+
+    def get_queryset(self):
+        return Lesson.objects.filter(
+            section__course__instructor__user=self.request.user
+        )

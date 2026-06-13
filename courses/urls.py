@@ -19,6 +19,8 @@ from courses.views import (
     CourseListCreateAPIView,
     SectionListCreateAPIView,
     SectionDetailAPIView,
+    LessonListCreateAPIView,
+    LessonUpdateAPIView,
 )
 
 urlpatterns = [
@@ -40,4 +42,6 @@ urlpatterns = [
     path("courses/create/", CourseListCreateAPIView.as_view()),
     path("courses/<slug:course_slug>/sections/", SectionListCreateAPIView.as_view()),
     path("sections/<int:id>/", SectionDetailAPIView.as_view()),
+    path("section/<int:section_id>/lessons", LessonListCreateAPIView.as_view()),
+    path("lessons/<int:id>", LessonUpdateAPIView.as_view()),
 ]

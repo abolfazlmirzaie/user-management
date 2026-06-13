@@ -205,3 +205,15 @@ class SectionListCreateUpdateSerializer(serializers.ModelSerializer):
         model = Section
         fields = ["title"]
         read_only_fields = ["id"]
+
+
+class LessonListCreateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Lesson
+        fields = ["title", "description", "video_url"]
+
+
+class LessonUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Lesson
+        fields = ["id", "title", "video_url", "order", "description"]
