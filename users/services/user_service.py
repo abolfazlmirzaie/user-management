@@ -2,7 +2,7 @@ from django.contrib.auth import authenticate
 from rest_framework.response import Response
 
 from courses.models import Enrollment
-from users.models import Instructor, InstructorApplication
+from users.models import Instructor, InstructorApplication, PendingLogin
 from rest_framework.exceptions import ValidationError
 from users.models import CustomUser as User
 from django.db import transaction
@@ -32,13 +32,14 @@ class UserService:
         user = authenticate(username=username, password=password)
         if not user:
             return False, "invalid username or password", None
-        if not user.is_verified:
-            return False, "your email is not verified", None
 
-        code = OTPService.generate_otp(user.email)
-        EmailService.send_verification_email(user.email, code)
+        if user.two_factor_enabled:
+            code = OTPService.generate_otp(user.email)
+            EmailService.send_verification_email(user.email, code)
 
-        return None, "otp sent", user
+            return None, "otp sent to your email", user
+
+        return True, "you are now logged in", user
 
 
 class InstructorService:

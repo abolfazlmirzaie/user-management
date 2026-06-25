@@ -100,9 +100,10 @@ class UserLoginView(APIView):
         serializer = UserLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        user = serializer.validated_data["user"]
+        username = serializer.validated_data["username"]
+        password = serializer.validated_data["password"]
 
-        ok, msg, user = UserService.login(user.username, request.data["password"])
+        ok, msg, user = UserService.login(username, password)
         if ok:
             refresh = RefreshToken.for_user(user)
 
@@ -113,20 +114,21 @@ class UserLoginView(APIView):
                 },
                 status=status.HTTP_200_OK,
             )
+
         if ok is None:
             PendingLogin.objects.filter(user=user).delete()
             pending_login = PendingLogin.objects.create(user=user)
+
+
             return Response(
                 {
-                    "message": "otp sent",
+                    "message": msg,
                     "pending_token": str(pending_login.token),
                 },
                 status=status.HTTP_200_OK,
             )
-        return Response(
-            {"message": msg},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+
+        return Response({"message": msg}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class VerifyOTPLoginView(APIView):

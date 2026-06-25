@@ -30,7 +30,7 @@ urlpatterns = [
         VerifyUserEmailView.as_view(),
         name="verify-email",
     ),
-    path("login/", UserLoginView.as_view(), name="login"),
+    path("login/", UserLoginView.as_view(), name="user-login"),
     path(
         "instructor/application/",
         InstructorApplicationAPIView.as_view(),

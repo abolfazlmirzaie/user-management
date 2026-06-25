@@ -2,6 +2,7 @@ import email
 import re
 
 from django.contrib.auth import authenticate, get_user_model, password_validation
+from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
@@ -48,6 +49,9 @@ class UserRegisterSerializer(serializers.Serializer):
 
         try:
             validate_email(identifier)
+
+            if User.objects.filter(email=identifier).exists():
+                raise serializers.ValidationError({identifier: "Email already exists"})
 
             user = User.objects.create_user(
                 username=identifier,
